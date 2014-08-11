@@ -9,7 +9,7 @@ class FeatureExtraction
 public:
 	FeatureExtraction(int minHess);
 	void addImageToLib(std::string subject);
-	CoordinateReal detect(cv::Mat scene, bool debug);
+	std::vector<CoordinateReal> detect(cv::Mat scene, bool debug);
 
 	cv::Mat resultImage() { return matchedImage_; }
 	~FeatureExtraction();
