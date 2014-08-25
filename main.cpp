@@ -16,8 +16,8 @@ void main(int argc, char *argv[])
 	//Camera two(0);
 	FeatureExtraction surf(3000);
 	surf.addImageToLib("hands.jpg");
-	cv::Mat image = cv::imread("../../../../ThesisImages/elf.jpg");
-	surf.detect(image, true);
+	//cv::Mat image = cv::imread("../../../../ThesisImages/elf.jpg");
+	//surf.detect(image, true);
 	cv::imshow("winning", surf.resultImage());
 	waitKey(0);
 	//Mat onePic;
