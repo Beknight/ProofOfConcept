@@ -33,10 +33,17 @@ double Stereoscope::getDistance(CoordinateReal leftImage, CoordinateReal rightIm
 	//the left of centre line of left image is positive
 	double tanOmega2 = (deltaTwo * tan(radiansForFov)) / halfPixelWidth_;
 	//guess the depth of the object 
-	z = distanceApart_ / (tanOmega1 + tanOmega2) + halfWidthBall_;
-	// to get Y we need the distance from the centre of the object 
+	z = distanceApart_ / (tanOmega1 + tanOmega2) ;
+	currentLocation_.setZ(z);
+	// get the angle in ther vertical direction from the centre
+	
 	// the zero of x will be defined by the average co-ordinnate of both cameras
+	
 	return z;
+}
+
+void Stereoscope::calculateZ(double theta, double distance){
+
 }
 
 double Stereoscope::convertToRadians(double degrees){

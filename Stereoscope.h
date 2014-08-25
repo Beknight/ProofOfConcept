@@ -18,7 +18,11 @@ private:
 	double halfPixelWidth_;
 	double halfFOV_;
 	double distance_;
+	CoordinateReal currentLocation_;
 	double convertToRadians(double degrees);
+	void calculateX(double theta, double distance);
+	void calculateY(double alpha, double distance);
+	void calculateZ(double theta, double distance);
 	
 };
 

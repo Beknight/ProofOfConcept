@@ -12,14 +12,25 @@ using namespace std;
 
 void main(int argc, char *argv[])
 {
-	//Camera one(2);
-	//Camera two(0);
+	Camera one(1);
+	//Camera two(2);
 	FeatureExtraction surf(3000);
-	surf.addImageToLib("hands.jpg");
-	//cv::Mat image = cv::imread("../../../../ThesisImages/elf.jpg");
-	//surf.detect(image, true);
+	/*surf.addImageToLib("hands.jpg");
+	cv::Mat image = cv::imread("../../../../ThesisImages/elf.jpg");
+	surf.detect(image, true);
 	cv::imshow("winning", surf.resultImage());
-	waitKey(0);
+	waitKey(0);*/
+	bool running = true;
+	while (running){
+		cv::Mat frame = one.grabFrame();
+		char pressedKey = ' ';
+		imshow("hello", frame);
+		char curPressed = cvWaitKey(3);
+		if (curPressed == pressedKey){
+			one.writeLatestImageToFile("povTest");
+			running = false;
+		}
+	}
 	//Mat onePic;
 	//Mat twoPic;
 	//char pressedKey = ' ';
