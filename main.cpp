@@ -31,6 +31,7 @@ void main(int argc, char *argv[])
 			running = false;
 		}
 	}
+
 	//Mat onePic;
 	//Mat twoPic;
 	//char pressedKey = ' ';
