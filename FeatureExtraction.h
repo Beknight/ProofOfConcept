@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include "CoordinateReal.h"
+#include "opencv2\nonfree\gpu.hpp"
 class FeatureExtraction
 {
 public:

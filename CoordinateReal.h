@@ -7,9 +7,9 @@ public:
 	double x() { return x_; }
 	double y() { return y_; }
 	double z() { return z_; }
-	double setZ(double x){ x_ = x; }
-	double setY(double y){ y_ = y; }
-	double setX(double z){ z_ = z; }
+	void setZ(double x){ x_ = x; }
+	void setY(double y){ y_ = y; }
+	void setX(double z){ z_ = z; }
 	~CoordinateReal();
 
 private:

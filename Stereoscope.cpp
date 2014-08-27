@@ -10,10 +10,11 @@ using namespace std;
 Stereoscope::Stereoscope()
 {
 	//set up the variables for calculation;
-	halfFOV_ = 24.2;
-	halfPixelWidth_ = Camera::reso_width / 2;
+	halfFOV_ = 25;
+	int reso_width = Camera::reso_width;
+	halfPixelWidth_ = (reso_width / 2);
+	cout << "halfPixelWidth:" <<halfPixelWidth_<< endl; 
 	distance_ = 0;
-	string curLine;
 }
 
 
@@ -36,6 +37,8 @@ CoordinateReal Stereoscope::getLocation(CoordinateReal leftImage, CoordinateReal
 	double tanOmega2 = (deltaTwo * tan(radiansForFov)) / halfPixelWidth_;
 	//guess the depth of the object 
 	z = distanceApart_ / (tanOmega1 - tanOmega2) ;
+	cout << "halfPixeldWidth: " << halfPixelWidth_ << endl;
+	cout << "z: " << z << endl;
 	currentLocation_.setZ(z);
 	// get the angle in ther vertical direction from the centre
 

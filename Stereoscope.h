@@ -13,7 +13,7 @@ public:
 	//find circle
 	~Stereoscope();
 private:
-	const int distanceApart_ = 310; //mm
+	const int distanceApart_ = 250; //mm
 	const double halfWidthBall_ = 48.2; //mm
 	double halfPixelWidth_;
 	double halfFOV_; 
