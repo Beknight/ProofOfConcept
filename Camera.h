@@ -7,9 +7,9 @@ class Camera
 {
 	
 public:
-	static const int reso_height = 640;
-	static const int reso_width = 1280;
-	static const int hor_fov = 50;
+	static const int reso_height	= 640;
+	static const int reso_width		= 1280;
+	static const int hor_fov		= 50;
 	Camera(int cameraNumber);
 	~Camera();
 	//methods

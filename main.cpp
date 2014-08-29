@@ -61,7 +61,6 @@ void main(int argc, char *argv[])
 		//	running = false;
 		//}
 		CoordinateReal real = stereo.getLocation(coordLeft[0], coordRight[0]);
-		//cout << real.z() << endl;
 		imshow("left", frameLeft);
 		imshow("right", frameRight);
 		
