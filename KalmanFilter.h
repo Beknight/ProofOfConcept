@@ -29,5 +29,5 @@ private:
 	cv::Mat kalmanGain();
 	cv::Mat getInnovation();
 	cv::Mat updateStep();
-	};
+};
 

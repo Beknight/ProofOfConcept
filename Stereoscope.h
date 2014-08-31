@@ -23,7 +23,6 @@ private:
 	double calculateX(double distance, double tanOmegaLeft, double tanOmegaRight);
 	float calculateY(CoordinateReal leftImage,CoordinateReal rightImage, double distance, double x);
 	void calculateZ(double theta, double distance);
-	
-	
+
 };
 

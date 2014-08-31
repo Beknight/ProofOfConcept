@@ -10,8 +10,8 @@ class FeatureExtraction
 public:
 	FeatureExtraction(int minHess);
 	void addImageToLib(std::string subject);
-	std::vector<CoordinateReal> detect(cv::Mat scene, bool debug);
-
+	std::vector<CoordinateReal> detect(cv::Mat scene, bool debug, bool found, cv::Rect subMat);
+	std::vector<cv::Point2f> getSceneCorners() { return sceneCorners_; }
 	cv::Mat resultImage() { return matchedImage_; }
 	~FeatureExtraction();
 private: 
@@ -28,8 +28,8 @@ private:
 	cv::FlannBasedMatcher matcher_;
 	//the image with the subject located
 	cv::Mat matchedImage_;
-
-
+	std::vector<cv::Point2f> sceneCorners_;
+	std::vector<cv::Point2f> getDelta(std::vector<cv::Point2f>, int deltaX, int deltaY);
 
 };
 

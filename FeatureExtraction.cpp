@@ -11,15 +11,38 @@ FeatureExtraction::~FeatureExtraction()
 {
 }
 
-std::vector<CoordinateReal> FeatureExtraction::detect(cv::Mat scene, bool debug)
+std::vector<CoordinateReal> FeatureExtraction::detect(cv::Mat scene, bool debug, bool found, cv::Rect subMat)
 {
+	int deltaX = 0;
+	int deltaY = 0;
 	std::vector<CoordinateReal> objectLocationList;
 	////get the detectors of the scene
 	std::vector<cv::KeyPoint> sceneKeyPoints;
 	cv::Mat sceneDescriptors;
-	surf_.detect(scene, sceneKeyPoints);
+	if (found){
+		cv::Mat subMatrix = scene(subMat);
+		deltaX = subMat.x;
+		deltaY = subMat.y;
+		std::cout << "delta x and y: " << deltaX << " ; " << deltaY << std::endl;
+		//create a mask 50% of the image masked
+		cv::Mat mask = cv::Mat::ones(subMatrix.rows, subMatrix.cols, CV_8UC3);
+		mask(cv::Rect(0, 0, 100, 100)) = 0;
+		cv::Mat gah;
+		subMatrix.copyTo(gah);
+		gah.copyTo(gah, mask);
+		imshow("gah", gah);
+		imshow("testingSub: ", subMatrix);
+		//mask a section of it
+		//apply it to subMat
+		surf_.detect(subMatrix, sceneKeyPoints);
+		extractor_.compute(subMatrix, sceneKeyPoints, sceneDescriptors);
+	} else {
+		surf_.detect(scene, sceneKeyPoints);
+		extractor_.compute(scene, sceneKeyPoints, sceneDescriptors);
+	}
+	//cv::Mat tester = found ? scene.clone();
+	
 	//get the descriptors
-	extractor_.compute(scene, sceneKeyPoints, sceneDescriptors);
 	////for all the template images, search the scene
 	for (int i = 0; i < libraryCount_; i++){
 		
@@ -62,7 +85,6 @@ std::vector<CoordinateReal> FeatureExtraction::detect(cv::Mat scene, bool debug)
 		obj_corners[2] = cvPoint(templates_[i]->cols, templates_[i]->rows);
 		obj_corners[3] = cvPoint(0, templates_[i]->rows);
 		std::vector< cv::Point2f > scene_corners(4);
-
 		perspectiveTransform(obj_corners, scene_corners, H);
 		//-- Draw lines between the corners (the mapped object in the scene - image_2 )
 		line(matchedImage_, scene_corners[0] + cv::Point2f(templates_[i]->cols, 0), scene_corners[1] + cv::Point2f(templates_[i]->cols, 0), cv::Scalar(0, 255, 0), 2); //TOP line
@@ -78,10 +100,19 @@ std::vector<CoordinateReal> FeatureExtraction::detect(cv::Mat scene, bool debug)
 			cv::Scalar(0, 0, 255),
 			thickness,
 			lineType);
-		CoordinateReal objectLoc(xAverage, yAverage, 0);
+		CoordinateReal objectLoc(xAverage + deltaX, yAverage + deltaY, 0);
 		objectLocationList.push_back(objectLoc);
+		sceneCorners_ = getDelta(scene_corners, deltaX, deltaY);
 	}
 	return objectLocationList;
+}
+
+std::vector<cv::Point2f> FeatureExtraction::getDelta(std::vector<cv::Point2f> corners, int deltaX, int deltaY){
+	for (int i = 0; i < corners.size(); i++){
+		corners[i].x += deltaX;
+		corners[i].y += deltaY;
+	}
+	return corners;
 }
 
 void FeatureExtraction::addImageToLib(std::string subject)
