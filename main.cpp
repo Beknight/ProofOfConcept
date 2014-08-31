@@ -20,47 +20,48 @@ void main(int argc, char *argv[])
 	char curPressed = ' ';
 	surf.addImageToLib("backToTheFutureCover.jpg");
 	while (running){
-		waitKey(0);
+		curPressed = waitKey(10);
 		//////left frame =============================
 		cv::Mat frameLeft = one.grabFrame();
 	
 		cv::Mat frameRight = two.grabFrame();
-		waitKey(50);
+
 		frameRight = two.grabFrame();
-	
-		//char pressedKey = 'p';
-		////
-		std::vector<CoordinateReal> coordLeft = surf.detect(frameLeft, true);
-		if (!coordLeft.empty()){
-			int thickness = -1;
-			int lineType = 8;
-			cv::circle(frameLeft, cv::Point2f(coordLeft[0].x(), coordLeft[0].y()), 5,
-				cv::Scalar(0, 0, 255),
-				thickness,
-				lineType);
-		}
-		////right frame ==================================
-	
+		if (curPressed == ' '){
+			//char pressedKey = 'p';
+			////
+			std::vector<CoordinateReal> coordLeft = surf.detect(frameLeft, true);
+			if (!coordLeft.empty()){
+				int thickness = -1;
+				int lineType = 8;
+				cv::circle(frameLeft, cv::Point2f(coordLeft[0].x(), coordLeft[0].y()), 5,
+					cv::Scalar(0, 0, 255),
+					thickness,
+					lineType);
+			}
+			////right frame ==================================
 
-		std::vector<CoordinateReal> coordRight = surf.detect(frameRight, true);
-		if (!coordRight.empty()){
-			int thickness = -1;
-			int lineType = 8;
-			cv::circle(frameRight, cv::Point2f(coordRight[0].x(), coordRight[0].y()), 5,
-				cv::Scalar(0, 0, 255),
-				thickness,
-				lineType);
-		}
 
-		////char curPressed = cvWaitKey(100);
-		//if (curPressed == pressedKey){
-		//	one.writeLatestImageToFile("../../../../ThesisImages/povTest.jpg");
-		//	running = false;
-		//}
-		//else if (curPressed == ' '){
-		//	running = false;
-		//}
-		CoordinateReal real = stereo.getLocation(coordLeft[0], coordRight[0]);
+			std::vector<CoordinateReal> coordRight = surf.detect(frameRight, true);
+			if (!coordRight.empty()){
+				int thickness = -1;
+				int lineType = 8;
+				cv::circle(frameRight, cv::Point2f(coordRight[0].x(), coordRight[0].y()), 5,
+					cv::Scalar(0, 0, 255),
+					thickness,
+					lineType);
+			}
+
+			////char curPressed = cvWaitKey(100);
+			//if (curPressed == pressedKey){
+			//	one.writeLatestImageToFile("../../../../ThesisImages/povTest.jpg");
+			//	running = false;
+			//}
+			//else if (curPressed == ' '){
+			//	running = false;
+			//}
+			CoordinateReal real = stereo.getLocation(coordLeft[0], coordRight[0]);
+		}
 		imshow("left", frameLeft);
 		imshow("right", frameRight);
 		

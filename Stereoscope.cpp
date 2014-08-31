@@ -36,7 +36,7 @@ CoordinateReal Stereoscope::getLocation(CoordinateReal leftImage, CoordinateReal
 	//the left of centre line of left image is positive
 	double tanOmega2 = (deltaTwo * tan(radiansForFov)) / halfPixelWidth_;
 	//guess the depth of the object 
-	z = distanceApart_ / (tanOmega1 - tanOmega2) ;
+	z = distanceApart_ / (tanOmega1 - tanOmega2)  + 10;
 	cout << "halfPixeldWidth: " << halfPixelWidth_ << endl;
 	cout << "z: " << z << endl;
 	currentLocation_.setZ(z);
@@ -69,18 +69,22 @@ float Stereoscope::calculateY(CoordinateReal leftImage, CoordinateReal rightImag
 	//half the vert resolution - givenY
 	float realLeftY = (Camera::reso_height / 2) - leftImage.y();
 	float realRightY = (Camera::reso_height / 2) - rightImage.y();
+	cout << "leftY:" << realLeftY << " rightY" << realRightY << endl;
 	//get the hypotenuse of the z and x
 	float averageY = (realLeftY + realRightY) / 2;
-	float angle = atan(distance / x);
+	float angle = atan(x / distance);
 	angle = std::abs(angle);
 	float hypotenuse = distance / cos(angle);
 	//figure out the distance in the y direction according to the hypotenuse ( abs dist) and height
-	float maxHeight = hypotenuse * tan(vertFov_ / 2);
+	float vertFovRad = convertToRadians(vertFov_ / 2);
+	float maxHeight = hypotenuse * tan(vertFovRad);
 	//now figure out the ration between half vertical resolution and the pixel height of th eobject
 	float ratio = averageY / (Camera::reso_height / 2);
 	float y = maxHeight * ratio;
 	return y;
 }
+
+
 
 double Stereoscope::convertToRadians(double degrees){
 	//radians = degrees * pi/180
@@ -88,4 +92,5 @@ double Stereoscope::convertToRadians(double degrees){
 	cout << "degrees: " << degrees << " radians: " << radians<< endl;
 	return radians;
 }
+
 

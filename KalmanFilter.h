@@ -10,6 +10,7 @@ public:
 	//setup
 	KalmanFilter();
 	~KalmanFilter();
+	cv::Point2d expectedObservation();
 	// kalman filter run
 	void execute();
 private:
@@ -28,6 +29,5 @@ private:
 	cv::Mat kalmanGain();
 	cv::Mat getInnovation();
 	cv::Mat updateStep();
-	
-};
+	};
 
