@@ -1,6 +1,7 @@
 #pragma once
 #include "LibraryHeaders.h"
 #include <string>
+#include "CoordinateReal.h"
 using namespace cv;
 
 class Camera
@@ -21,5 +22,9 @@ private:
 	int cameraId_;
 	CvCapture* capture_;
 	Mat curFrame_;
+	CoordinateReal location;
+	double angleAlpha;//top view angle from the x axis defined by camera zero
+	double angleBeta;//side view angle form the x axis
+	
 };
 

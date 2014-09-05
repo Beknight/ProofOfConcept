@@ -10,13 +10,15 @@ public:
 	//setup
 	KalmanFilter();
 	~KalmanFilter();
-	cv::Point2d expectedObservation();
+	void initialise(cv::Mat initialPose);
+	cv::Mat expectedObservation();
 	// kalman filter run
 	void execute();
 private:
+	// observation 
 	//the two required classes to help out 
 	LogRecorder logRecorder_;
-	Stereoscope stereoscope_;
+	
 	// the four required kalman filter fields
 	cv::Mat covariance_;
 	cv::Mat q_;
@@ -29,5 +31,5 @@ private:
 	cv::Mat kalmanGain();
 	cv::Mat getInnovation();
 	cv::Mat updateStep();
-};
+	};
 

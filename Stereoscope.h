@@ -15,7 +15,7 @@ private:
 	const int distanceApart_	= 250; //mm
 	double halfPixelWidth_;
 	double halfFOV_; 
-	float vertFov_ = 30;
+	float vertFov_				= 30;
 	double distance_;
 	CoordinateReal currentLocation_;
 	void narrowField();
@@ -23,6 +23,6 @@ private:
 	double calculateX(double distance, double tanOmegaLeft, double tanOmegaRight);
 	float calculateY(CoordinateReal leftImage,CoordinateReal rightImage, double distance, double x);
 	void calculateZ(double theta, double distance);
-
+	cv::Mat applyMask(float percentage, cv::Mat src);
 };
 

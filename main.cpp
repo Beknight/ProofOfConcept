@@ -17,7 +17,7 @@ void main(int argc, char *argv[])
 	Camera one(0);
 	Camera two(2);
 	bool found = false;
-	FeatureExtraction surf(9000);
+	FeatureExtraction surf(7000);
 	Stereoscope stereo;
 	Util util;
 	bool running = true;
@@ -59,8 +59,6 @@ void main(int argc, char *argv[])
 			}
 
 			////right frame ==================================
-
-
 			std::vector<CoordinateReal> coordRight = surf.detect(frameRight, true, found, rightRealRect);
 			if (!coordRight.empty()){
 				int thickness = -1;
@@ -79,7 +77,6 @@ void main(int argc, char *argv[])
 					rightRealRect = util.getSizedRect(rightRect, one.reso_height, one.reso_width, 0.1);
 				}
 			}
-
 			////char curPressed = cvWaitKey(100);
 			//if (curPressed == pressedKey){
 			//	one.writeLatestImageToFile("../../../../ThesisImages/povTest.jpg");

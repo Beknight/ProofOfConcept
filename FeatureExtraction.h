@@ -17,7 +17,7 @@ public:
 private: 
 	//library templates 
 	int libraryCount_ = 0;
-	float nndrRatio_ = 0.7;
+	float nndrRatio_ = 0.7; 
 	std::vector<std::shared_ptr<cv::Mat>> templates_;
 	//2d a vector of a vector of keypoints
 	std::vector<std::vector<cv::KeyPoint>> libraryKeyPoints_;
