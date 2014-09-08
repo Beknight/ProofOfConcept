@@ -19,17 +19,20 @@ std::vector<CoordinateReal> FeatureExtraction::detect(cv::Mat scene, bool debug,
 	////get the detectors of the scene
 	std::vector<cv::KeyPoint> sceneKeyPoints;
 	cv::Mat sceneDescriptors;
+	cv::Mat subMatrix;
+	cv::Mat maskedMat;
 	if (found){
-		cv::Mat subMatrix = scene(subMat);
+		subMatrix = scene(subMat);
 		deltaX = subMat.x;
 		deltaY = subMat.y;
 		std::cout << "delta x and y: " << deltaX << " ; " << deltaY << std::endl;
-		imshow("testingSub: ", subMatrix);
+		
 		//mask a section of it
-		cv::Mat maskedMat = applyMask(0.6, subMatrix);
-		imshow("gah: ", maskedMat);
+		//maskedMat = applyMask(0.3, subMatrix);
+		//imshow("testingSub: ", maskedMat);
 		//apply it to subMat
 		surf_.detect(subMatrix, sceneKeyPoints);
+
 		extractor_.compute(subMatrix, sceneKeyPoints, sceneDescriptors);
 	} else {
 		surf_.detect(scene, sceneKeyPoints);
@@ -74,6 +77,15 @@ std::vector<CoordinateReal> FeatureExtraction::detect(cv::Mat scene, bool debug,
 		obj_corners[3] = cvPoint(0, templates_[i]->rows);
 		std::vector< cv::Point2f > scene_corners(4);
 		perspectiveTransform(obj_corners, scene_corners, H);
+		
+		/*if (found){
+			cv::drawMatches(*templates_[i], libraryKeyPoints_[i], maskedMat, sceneKeyPoints, goodMatches, matchedImage_, cv::Scalar::all(-1), cv::Scalar::all(-1),
+				std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+		}
+		else{
+			cv::drawMatches(*templates_[i], libraryKeyPoints_[i], scene, sceneKeyPoints, goodMatches, matchedImage_, cv::Scalar::all(-1), cv::Scalar::all(-1),
+				std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+		}*/
 		//-- Draw lines between the corners (the mapped object in the scene - image_2 )
 		//average the lenght and the width of the box to get the approx centre
 		double yAverage = 0.25*(scene_corners[0].y + scene_corners[1].y + scene_corners[2].y + scene_corners[3].y);
@@ -84,6 +96,7 @@ std::vector<CoordinateReal> FeatureExtraction::detect(cv::Mat scene, bool debug,
 			cv::Scalar(0, 0, 255),
 			thickness,
 			lineType);
+		//cv::imshow("matched: ", matchedImage_);
 		CoordinateReal objectLoc(xAverage + deltaX, yAverage + deltaY, 0);
 		objectLocationList.push_back(objectLoc);
 		sceneCorners_ = getDelta(scene_corners, deltaX, deltaY);
@@ -110,7 +123,9 @@ void FeatureExtraction::addImageToLib(std::string subject)
 	pwd += subject;
 	//create a raw pointer for the reference image
 	//wrap it in shared pointer
-	std::shared_ptr<cv::Mat> img_ptr(new cv::Mat(cv::imread(pwd)));
+	cv::Mat srcOriginal = cv::imread(pwd);
+	
+	std::shared_ptr<cv::Mat> img_ptr(new cv::Mat(srcOriginal));
 	//push onto the vector
 	templates_.push_back(img_ptr);
 	surf_.detect(*img_ptr, subjectKeyPoints);
@@ -122,7 +137,7 @@ void FeatureExtraction::addImageToLib(std::string subject)
 	libraryCount_++;
 }
 
-cv::Mat applyMask(float percentage, cv::Mat src){
+cv::Mat FeatureExtraction::applyMask(float percentage, cv::Mat src){
 	// figure out the area
 	int rows = src.rows * percentage;
 	int cols = src.cols * percentage;
@@ -132,7 +147,7 @@ cv::Mat applyMask(float percentage, cv::Mat src){
 	// size of block =  area * percentage
 	cv::Mat mask = cv::Mat(src.rows, src.cols, CV_8UC3, CV_RGB(1, 1, 1));
 	// get the rows and the cols of the src and create rectangle
-	mask(cv::Rect(originX, originY, rows, cols)) = (0, 0, 0);
+	mask(cv::Rect(originX, originY, cols, rows)) = (0, 0, 0);
 	// make a copy over the image and apply over the image, 
 	cv::Mat outPut;
 	src.copyTo(outPut, mask);

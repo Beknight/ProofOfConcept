@@ -37,17 +37,17 @@ CoordinateReal Stereoscope::getLocation(CoordinateReal leftImage, CoordinateReal
 	double tanOmega2 = (deltaTwo * tan(radiansForFov)) / halfPixelWidth_;
 	//guess the depth of the object 
 	z = distanceApart_ / (tanOmega1 - tanOmega2)  + 10;
-	cout << "halfPixeldWidth: " << halfPixelWidth_ << endl;
-	cout << "z: " << z << endl;
+	//cout << "z: " << z << endl;
 	currentLocation_.setZ(z);
 	// get the angle in ther vertical direction from the centre
 
 	// the zero of x will be defined by the average co-ordinnate of both cameras
 	x = calculateX(z, tanOmega1, tanOmega2);
-	cout<< "x: "<< x << endl;
+	//cout<< "x: "<< x << endl;
 	y = calculateY(leftImage, rightImage, z, x);
-	cout << "y: " << y << endl;
+	//cout << "y: " << y << endl;
 	currentLocation_.setX(x);
+	currentLocation_.setY(y);
 	return currentLocation_;
 }
 

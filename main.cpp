@@ -17,7 +17,7 @@ void main(int argc, char *argv[])
 	Camera one(0);
 	Camera two(2);
 	bool found = false;
-	FeatureExtraction surf(7000);
+	FeatureExtraction surf(7500);
 	Stereoscope stereo;
 	Util util;
 	bool running = true;
@@ -78,6 +78,7 @@ void main(int argc, char *argv[])
 			//	running = false;
 			//}
 			CoordinateReal real = stereo.getLocation(coordLeft[0], coordRight[0]);
+			cout << "z: " << real.z() << " x: " << real.x() << " y: " << real.y();
 			cv::imshow("left", frameLeft);
 			cv::imshow("right", frameRight);
 			cout <<"time in seconds" <<float(clock() - beginTime) / CLOCKS_PER_SEC << endl;

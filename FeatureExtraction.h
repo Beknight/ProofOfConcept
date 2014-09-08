@@ -30,6 +30,6 @@ private:
 	cv::Mat matchedImage_;
 	std::vector<cv::Point2f> sceneCorners_;
 	std::vector<cv::Point2f> getDelta(std::vector<cv::Point2f>, int deltaX, int deltaY);
-
+	cv::Mat applyMask(float percentage, cv::Mat src);
 };
 

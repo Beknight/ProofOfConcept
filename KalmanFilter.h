@@ -4,14 +4,15 @@
 #include <iostream>
 #include "LogRecorder.h"
 #include "Stereoscope.h"
+#include "Camera.h"
 class KalmanFilter
 {
 public:
 	//setup
 	KalmanFilter();
 	~KalmanFilter();
-	void initialise(cv::Mat initialPose);
-	cv::Mat expectedObservation();
+	void initialise(CoordinateReal initialPosition);
+	cv::Mat expectedObservation(Camera camera);
 	// kalman filter run
 	void execute();
 private:

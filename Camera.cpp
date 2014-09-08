@@ -11,6 +11,17 @@ Camera::Camera(int cameraNumber	)
 	cvSetCaptureProperty(capture_, CV_CAP_PROP_FRAME_WIDTH, reso_width);
 }
 
+Camera::Camera(int cameraNumber, float x, float y, float z, double pitch, double yaw){
+	cameraId_ = cameraNumber;
+	capture_ = cvCaptureFromCAM(cameraId_);
+	isSaving_ = false;
+	// set the camera settings 
+	cvSetCaptureProperty(capture_, CV_CAP_PROP_FRAME_HEIGHT, reso_height);
+	cvSetCaptureProperty(capture_, CV_CAP_PROP_FRAME_WIDTH, reso_width);
+	location_ = CoordinateReal(x,y,z);
+	yaw_ = yaw;
+	pitch_ = pitch;
+}
 
 Camera::~Camera()
 {
