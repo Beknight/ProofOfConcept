@@ -15,6 +15,9 @@ public:
 	Camera(int camearaNumbern, float x, float y, float z, double pitch, double yaw);
 	~Camera();
 	//methods
+	CoordinateReal location() { return location_; }
+	double yaw() { return yaw_; }
+	double pitch() { return pitch_;  }
 	Mat grabFrame(); //grab the current frame from the webcam 
 	void writeLatestImageToFile(string filename);
 

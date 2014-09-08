@@ -15,6 +15,7 @@ public:
 	cv::Mat expectedObservation(Camera camera);
 	// kalman filter run
 	void execute();
+	void printCurrentState();
 private:
 	// observation 
 	//the two required classes to help out 
@@ -32,5 +33,7 @@ private:
 	cv::Mat kalmanGain();
 	cv::Mat getInnovation();
 	cv::Mat updateStep();
-	};
+	cv::Mat getCurrentState(){ return x_; }
+	
+};
 

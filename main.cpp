@@ -9,11 +9,14 @@
 #include "Camera.h"
 #include "time.h"
 #include "Util.h"
+#include "KalmanFilter.h"
 using namespace cv;
 using namespace std;
 
 void main(int argc, char *argv[])
 {
+	KalmanFilter kalman;
+
 	Camera one(0);
 	Camera two(2);
 	bool found = false;
@@ -79,6 +82,8 @@ void main(int argc, char *argv[])
 			//}
 			CoordinateReal real = stereo.getLocation(coordLeft[0], coordRight[0]);
 			cout << "z: " << real.z() << " x: " << real.x() << " y: " << real.y();
+			kalman.initialise(real);
+			kalman.printCurrentState();
 			cv::imshow("left", frameLeft);
 			cv::imshow("right", frameRight);
 			cout <<"time in seconds" <<float(clock() - beginTime) / CLOCKS_PER_SEC << endl;
