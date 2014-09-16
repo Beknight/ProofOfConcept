@@ -13,7 +13,7 @@ Stereoscope::Stereoscope()
 	halfFOV_ = 25;
 	int reso_width = Camera::reso_width;
 	halfPixelWidth_ = (reso_width / 2);
-	cout << "halfPixelWidth:" <<halfPixelWidth_<< endl; 
+	//cout << "halfPixelWidth:" <<halfPixelWidth_<< endl; 
 	distance_ = 0;
 }
 
@@ -69,7 +69,7 @@ float Stereoscope::calculateY(CoordinateReal leftImage, CoordinateReal rightImag
 	//half the vert resolution - givenY
 	float realLeftY = (Camera::reso_height / 2) - leftImage.y();
 	float realRightY = (Camera::reso_height / 2) - rightImage.y();
-	cout << "leftY:" << realLeftY << " rightY" << realRightY << endl;
+	//cout << "leftY:" << realLeftY << " rightY" << realRightY << endl;
 	//get the hypotenuse of the z and x
 	float averageY = (realLeftY + realRightY) / 2;
 	float angle = atan(x / distance);
@@ -89,7 +89,7 @@ float Stereoscope::calculateY(CoordinateReal leftImage, CoordinateReal rightImag
 double Stereoscope::convertToRadians(double degrees){
 	//radians = degrees * pi/180
 	double radians = degrees * (PI / 180);
-	cout << "degrees: " << degrees << " radians: " << radians<< endl;
+	//cout << "degrees: " << degrees << " radians: " << radians<< endl;
 	return radians;
 }
 

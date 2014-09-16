@@ -1,5 +1,5 @@
 #include "Camera.h"
-
+#include "Util.h"
 
 Camera::Camera(int cameraNumber	)
 {
@@ -19,8 +19,8 @@ Camera::Camera(int cameraNumber, float x, float y, float z, double pitch, double
 	cvSetCaptureProperty(capture_, CV_CAP_PROP_FRAME_HEIGHT, reso_height);
 	cvSetCaptureProperty(capture_, CV_CAP_PROP_FRAME_WIDTH, reso_width);
 	location_ = CoordinateReal(x,y,z);
-	yaw_ = yaw;
-	pitch_ = pitch;
+	yaw_ = Util::convertToRadians(yaw);
+	pitch_ = Util::convertToRadians(pitch);
 }
 
 Camera::~Camera()

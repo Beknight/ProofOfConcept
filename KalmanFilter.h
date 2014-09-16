@@ -17,6 +17,9 @@ public:
 	void execute();
 	void printCurrentState();
 private:
+	// the angle constants that we need for 
+	double angleConstX = 0; 
+	double angleConstY = 0;
 	// observation 
 	//the two required classes to help out 
 	LogRecorder logRecorder_;

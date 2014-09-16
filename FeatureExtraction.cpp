@@ -25,7 +25,7 @@ std::vector<CoordinateReal> FeatureExtraction::detect(cv::Mat scene, bool debug,
 		subMatrix = scene(subMat);
 		deltaX = subMat.x;
 		deltaY = subMat.y;
-		std::cout << "delta x and y: " << deltaX << " ; " << deltaY << std::endl;
+		//std::cout << "delta x and y: " << deltaX << " ; " << deltaY << std::endl;
 		
 		//mask a section of it
 		//maskedMat = applyMask(0.3, subMatrix);
@@ -96,6 +96,7 @@ std::vector<CoordinateReal> FeatureExtraction::detect(cv::Mat scene, bool debug,
 			cv::Scalar(0, 0, 255),
 			thickness,
 			lineType);
+		//std::cout << "xAngle" << H.at<double>(0, 0) << std::endl;
 		//cv::imshow("matched: ", matchedImage_);
 		CoordinateReal objectLoc(xAverage + deltaX, yAverage + deltaY, 0);
 		objectLocationList.push_back(objectLoc);
@@ -124,7 +125,6 @@ void FeatureExtraction::addImageToLib(std::string subject)
 	//create a raw pointer for the reference image
 	//wrap it in shared pointer
 	cv::Mat srcOriginal = cv::imread(pwd);
-	
 	std::shared_ptr<cv::Mat> img_ptr(new cv::Mat(srcOriginal));
 	//push onto the vector
 	templates_.push_back(img_ptr);

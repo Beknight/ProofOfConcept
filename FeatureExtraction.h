@@ -11,6 +11,7 @@ public:
 	FeatureExtraction(int minHess);
 	void addImageToLib(std::string subject);
 	std::vector<CoordinateReal> detect(cv::Mat scene, bool debug, bool found, cv::Rect subMat);
+	CoordinateReal grabObservation(cv::Mat scene, bool debug, bool found, cv::Rect subMat);
 	std::vector<cv::Point2f> getSceneCorners() { return sceneCorners_; }
 	cv::Mat resultImage() { return matchedImage_; }
 	~FeatureExtraction();

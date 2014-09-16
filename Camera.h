@@ -10,9 +10,10 @@ class Camera
 public:
 	static const int reso_height	= 640;
 	static const int reso_width		= 1280;
-	static const int hor_fov		= 50;
+	static const int hor_fov		= 50; //deg
+	static const int vert_fov		= 30; //deg
 	Camera(int cameraNumber);
-	Camera(int camearaNumbern, float x, float y, float z, double pitch, double yaw);
+	Camera(int camearaNumber, float x, float y, float z, double pitch, double yaw);
 	~Camera();
 	//methods
 	CoordinateReal location() { return location_; }
