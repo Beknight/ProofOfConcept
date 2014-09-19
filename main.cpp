@@ -18,6 +18,8 @@ void main(int argc, char *argv[])
 {
 	FastTracking fastTrack(20);
 	VideoCapture capture;
+				int thickness = -1;
+				int lineType = 8;
 	Mat frame1, frame2;
 	while (1){
 		//open the video
@@ -28,8 +30,14 @@ void main(int argc, char *argv[])
 			capture.read(frame2);
 
 			waitKey(1);
-			fastTrack.findObject(frame1, frame2);
+			CoordinateReal loc = fastTrack.findObject(frame1, frame2);
+			cv::circle(frame1, cv::Point2f(loc.x(), loc.y()), 5,
+								cv::Scalar(0, 0, 255),
+								thickness,
+								lineType);
+			imshow("fameOne", frame1);
 		}
+
 	}
 	//KalmanFilter kalman;
 	//// the two stereoscope images
