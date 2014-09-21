@@ -8,8 +8,8 @@ class Camera
 {
 	
 public:
-	static const int reso_height	= 640;
-	static const int reso_width		= 1280;
+	static const int reso_height	= 480;
+	static const int reso_width		= 864;
 	static const int hor_fov		= 50; //deg
 	static const int vert_fov		= 30; //deg
 	Camera(int cameraNumber);

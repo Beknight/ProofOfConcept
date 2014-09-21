@@ -1,6 +1,7 @@
 #include "Camera.h"
 #include "Util.h"
 
+
 Camera::Camera(int cameraNumber	)
 {
 	cameraId_ = cameraNumber;

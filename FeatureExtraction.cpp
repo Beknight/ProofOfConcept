@@ -29,7 +29,7 @@ std::vector<CoordinateReal> FeatureExtraction::detect(cv::Mat scene, bool debug,
 		
 		//mask a section of it
 		//maskedMat = applyMask(0.3, subMatrix);
-		//imshow("testingSub: ", maskedMat);
+		imshow("testingSub: ", subMatrix);
 		//apply it to subMat
 		surf_.detect(subMatrix, sceneKeyPoints);
 
