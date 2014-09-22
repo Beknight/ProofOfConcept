@@ -20,11 +20,12 @@ bool simulation = false;
 bool running = true;
 bool found = false;
 bool screenShot = false;
-
+bool pause = false;
+bool surfing = false;
 void main(int argc, char *argv[])
 {
 	Mat emptyFrame = Mat::zeros(Camera::reso_height, Camera::reso_width, CV_8UC3);
-	Thesis::FastTracking fastTrack(19);
+	Thesis::FastTracking fastTrack(22);
 	Thesis::KalmanFilter kalman;
 	// the two stereoscope images
 	Camera one(0,-125,0,0,0,90);
@@ -40,14 +41,15 @@ void main(int argc, char *argv[])
 	Stereoscope stereo;
 	Util util;
 	bool once = false;
-	surf.addImageToLib("backToTheFutureCover.jpg");
+	bool foundInBoth = false;
 	std::vector<cv::Point2f> leftRect(4);
 	cv::Rect leftRealRect;
 	cv::Rect rightRealRect;
 	std::vector<cv::Point2f> rightRect(4);
 	cv::Mat frameLeft;
 	cv::Mat frameRight;
-	cv::Mat prevFrame;
+	cv::Mat prevFrameLeft;
+	cv::Mat prevFrameRight;
 	// check if you going to run simulation or not
 	cout << " run simulation: 's' or normal 'n'" << endl;
 	imshow("main", emptyFrame);
@@ -60,9 +62,15 @@ void main(int argc, char *argv[])
 		capTwo.open(right);
 		assert(capOne.isOpened() && capTwo.isOpened());
 	}
+	else{
+		surf.addImageToLib("backToTheFutureCover.jpg");
+	}
+	CoordinateReal leftLoc;
+	CoordinateReal rightLoc;
 	while (running){
 		const clock_t beginTime = clock();
 		command = waitKey(3);
+		commands(command);
 		int thickness = -1;
 		int lineType = 8;
 		if (!simulation){
@@ -70,6 +78,15 @@ void main(int argc, char *argv[])
 			frameRight = two.grabFrame();
 		}
 		else{
+			// if last frame, release then reopen
+			if (capOne.get(CV_CAP_PROP_POS_FRAMES) == (capOne.get(CV_CAP_PROP_FRAME_COUNT) - 1)){
+				capOne.release();
+				capTwo.release();
+				string left = "../../../../ThesisImages/left.avi";
+				string right = "../../../../ThesisImages/right.avi";
+				capOne.open(left);
+				capTwo.open(right);
+			}
 			// means it is simulation: i.e frames come from a video
 			capOne >> frameLeft;
 			capTwo >> frameRight;
@@ -92,6 +109,7 @@ void main(int argc, char *argv[])
 				line(frameLeft, leftRect[2], leftRect[3], cv::Scalar(0, 255, 0), 2);
 				line(frameLeft, leftRect[3], leftRect[0], cv::Scalar(0, 255, 0), 2);
 				leftRealRect = util.getSizedRect(leftRect, one.reso_height, one.reso_width, 0.1);
+				leftLoc = coordLeft[0];
 			}
 			//right frame ==================================
 			std::vector<CoordinateReal> coordRight = surf.detect(frameRight, true, found, rightRealRect);
@@ -108,6 +126,7 @@ void main(int argc, char *argv[])
 				line(frameRight, rightRect[2], rightRect[3], cv::Scalar(0, 255, 0), 2);
 				line(frameRight, rightRect[3], rightRect[0], cv::Scalar(0, 255, 0), 2);
 				rightRealRect = util.getSizedRect(rightRect, one.reso_height, one.reso_width, 0.1);
+				rightLoc = coordRight[0];
 			}
 			////char curPressed = cvWaitKey(100);
 			//if (curPressed == pressedKey){
@@ -117,37 +136,46 @@ void main(int argc, char *argv[])
 			//else if (curPressed == ' '){
 			//	running = false;
 			//}
-			CoordinateReal real = stereo.getLocation(coordLeft[0], coordRight[0]);
+			found = true;
+		}
+		else{
+			if (once){
+				leftLoc = fastTrack.findObject(frameLeft, prevFrameLeft);
+				rightLoc = fastTrack.findObject(frameRight, prevFrameRight);
+			}
+			frameLeft.copyTo(prevFrameLeft);
+			frameRight.copyTo(prevFrameRight);
+			once = true;
+			cv::circle(frameLeft, cv::Point2f(leftLoc.x(), leftLoc.y()), 5,
+				cv::Scalar(0, 0, 255),
+				thickness,
+				lineType);
+			cv::circle(frameRight, cv::Point2f(rightLoc.x(), rightLoc.y()), 5,
+				cv::Scalar(0, 0, 255),
+				thickness,
+				lineType);
+		}
+		cv::imshow("left", frameLeft);
+		cv::imshow("right", frameRight);
+		foundInBoth = Util::isInBothFrames(leftLoc, rightLoc);
+		
+		if (foundInBoth){
+			cout << "found in both" << endl;
+			CoordinateReal real = stereo.getLocation(leftLoc, rightLoc);
 			cout << "z: " << real.z() << " x: " << real.x() << " y: " << real.y();
 			kalman.initialise(real);
 			kalman.printCurrentState();
 			cv::imshow("left", frameLeft);
 			cv::imshow("right", frameRight);
-			cout <<"time in seconds" <<float(clock() - beginTime) / CLOCKS_PER_SEC << endl;
-			found = true;
+			cout << "time in seconds" << float(clock() - beginTime) / CLOCKS_PER_SEC << endl;
+			if (surfing){
+				waitKey(0);
+				surfing = false;
+			}
 			kalman.initialise(real);
 			kalman.expectedObservation(one);
-			char secondKey = cv::waitKey(0);
-			if (secondKey == 'r'){
-				found = false;
-			}
 		}
-		CoordinateReal loc;
-		CoordinateReal locTwo;
-		if (once){
-			loc = fastTrack.findObject(frameLeft, prevFrame);
-		}
-		frameLeft.copyTo(prevFrame);
-		once = true;
-	
-		cv::circle(frameLeft, cv::Point2f(loc.x(), loc.y()), 5,
-			cv::Scalar(0, 0, 255),
-			thickness,
-			lineType);
-		cv::imshow("left", frameLeft);
-		cv::imshow("right", frameRight);
-		//waitKey(10);
-		commands(command);
+		
 	}
 	return;
 }
@@ -163,15 +191,23 @@ void commands(char c){
 	// fast tracking
 	
 		break;
+	case 'd':
+		//debug
+		break;
 	case ' ':
 	// surf scanning
+		surfing = true;
 		break;
 	case 'r':
 	// reset
+		found = false;
 		break;
 	case 's':
 	//simulation mode
 		simulation = true;
+		break;
+	case 'p':
+		waitKey(0);
 		break;
 	case 'n':
 	//normal mode
