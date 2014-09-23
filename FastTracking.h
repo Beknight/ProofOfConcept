@@ -8,7 +8,7 @@ namespace Thesis{
 	{
 	public:
 		FastTracking(int thresholdValue);
-		CoordinateReal findObject(Mat frist, Mat second);
+		CoordinateReal findObject(Mat frist, Mat second, bool debug);
 		Point searchForMovement(Mat threshImage);
 		~FastTracking();
 	private:

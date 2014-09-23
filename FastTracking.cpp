@@ -1,14 +1,14 @@
 #include "FastTracking.h"
 
 #define MAX_VALUE 255
-#define BLUR_VAL 30
+#define BLUR_VAL 25
 namespace Thesis{
 	FastTracking::FastTracking(int sensitivity)
 	{
 		thresholdValue_ = sensitivity;
 	}
 
-	CoordinateReal FastTracking::findObject(Mat first, Mat second){
+	CoordinateReal FastTracking::findObject(Mat first, Mat second , bool debug){
 		CoordinateReal coord;
 		Point location;
 		Mat greyOne, greyTwo;
@@ -19,17 +19,24 @@ namespace Thesis{
 		cvtColor(second, greyTwo, COLOR_BGR2GRAY);
 		// get the asbolue difference of the images
 		absdiff(greyTwo, greyOne, difference);
-		imshow("difference", difference);
+		if (debug){
+			imshow("difference", difference);
+		}
 		//threshold the image
 		threshold(difference, threshImage, thresholdValue_, MAX_VALUE, THRESH_BINARY);
 		//blur  the images
+		if (debug){
+			imshow("threshImage: ", threshImage);
+		}
 		blur(threshImage, threshImage, cv::Size(BLUR_VAL, BLUR_VAL));
 		//threshold again
 		threshold(threshImage, threshImage, thresholdValue_, MAX_VALUE, THRESH_BINARY);
 		location = searchForMovement(threshImage);
 		coord.setX(location.x);
 		coord.setY(location.y);
-		imshow("threshold", threshImage);
+		if (debug){
+			imshow("threshold", threshImage);
+		}
 		return coord;
 	}
 

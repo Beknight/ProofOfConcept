@@ -22,10 +22,13 @@ bool found = false;
 bool screenShot = false;
 bool pause = false;
 bool surfing = false;
+bool leftDebug = false;
+bool rightDebug = false;
+bool record = false;
 void main(int argc, char *argv[])
 {
 	Mat emptyFrame = Mat::zeros(Camera::reso_height, Camera::reso_width, CV_8UC3);
-	Thesis::FastTracking fastTrack(22);
+	Thesis::FastTracking fastTrack(16);
 	Thesis::KalmanFilter kalman;
 	// the two stereoscope images
 	Camera one(0,-125,0,0,0,90);
@@ -35,8 +38,8 @@ void main(int argc, char *argv[])
 	VideoCapture capOne;
 	VideoCapture capTwo;
 	//open the recorders
-	//capOne.open("../../../../ThesisImages/left.avi", 0, 10, cv::Size(864, 480), true);
-	//capTwo.open("../../../../ThesisImages/right.avi", 0, 10, cv::Size(864, 480), true);
+	//writeOne.open("../../../../ThesisImages/leftFast.avi", 0, 12, cv::Size(864, 480), true);
+	//writeTwo.open("../../../../ThesisImages/rightFast.avi", 0, 12, cv::Size(864, 480), true);
 	FeatureExtraction surf(5000);
 	Stereoscope stereo;
 	Util util;
@@ -50,14 +53,14 @@ void main(int argc, char *argv[])
 	cv::Mat frameRight;
 	cv::Mat prevFrameLeft;
 	cv::Mat prevFrameRight;
+	string left = "../../../../ThesisImages/left.avi";
+	string right = "../../../../ThesisImages/right.avi";
 	// check if you going to run simulation or not
 	cout << " run simulation: 's' or normal 'n'" << endl;
 	imshow("main", emptyFrame);
 	char command = waitKey(0);
 	commands(command);
 	if (simulation){
-		string left = "../../../../ThesisImages/left.avi";
-		string right = "../../../../ThesisImages/right.avi";
 		capOne.open(left);
 		capTwo.open(right);
 		assert(capOne.isOpened() && capTwo.isOpened());
@@ -82,8 +85,6 @@ void main(int argc, char *argv[])
 			if (capOne.get(CV_CAP_PROP_POS_FRAMES) == (capOne.get(CV_CAP_PROP_FRAME_COUNT) - 1)){
 				capOne.release();
 				capTwo.release();
-				string left = "../../../../ThesisImages/left.avi";
-				string right = "../../../../ThesisImages/right.avi";
 				capOne.open(left);
 				capTwo.open(right);
 			}
@@ -91,8 +92,8 @@ void main(int argc, char *argv[])
 			capOne >> frameLeft;
 			capTwo >> frameRight;
 		}
-		//capOne.write(frameLeft);
-		//capTwo.write(frameRight);
+		//writeOne.write(frameLeft);
+		//writeTwo.write(frameRight);
 		if (command == ' '){
 			//left frame =============================
 			std::vector<CoordinateReal> coordLeft = surf.detect(frameLeft, true, found, leftRealRect);
@@ -140,8 +141,8 @@ void main(int argc, char *argv[])
 		}
 		else{
 			if (once){
-				leftLoc = fastTrack.findObject(frameLeft, prevFrameLeft);
-				rightLoc = fastTrack.findObject(frameRight, prevFrameRight);
+				leftLoc = fastTrack.findObject(frameLeft, prevFrameLeft, leftDebug);
+				rightLoc = fastTrack.findObject(frameRight, prevFrameRight, rightDebug);
 			}
 			frameLeft.copyTo(prevFrameLeft);
 			frameRight.copyTo(prevFrameRight);
@@ -164,7 +165,6 @@ void main(int argc, char *argv[])
 			CoordinateReal real = stereo.getLocation(leftLoc, rightLoc);
 			cout << "z: " << real.z() << " x: " << real.x() << " y: " << real.y();
 			kalman.initialise(real);
-			kalman.printCurrentState();
 			cv::imshow("left", frameLeft);
 			cv::imshow("right", frameRight);
 			cout << "time in seconds" << float(clock() - beginTime) / CLOCKS_PER_SEC << endl;
@@ -175,7 +175,6 @@ void main(int argc, char *argv[])
 			kalman.initialise(real);
 			kalman.expectedObservation(one);
 		}
-		
 	}
 	return;
 }
@@ -212,6 +211,14 @@ void commands(char c){
 	case 'n':
 	//normal mode
 		simulation = false;
+		break;
+	case 'k':
+		rightDebug = true;
+		leftDebug = false;
+		break;
+	case 'l':
+		leftDebug = true;
+		rightDebug = false;
 		break;
 	}
 }
