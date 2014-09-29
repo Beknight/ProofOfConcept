@@ -14,7 +14,8 @@ namespace Thesis{
 	KalmanFilter::KalmanFilter()
 	{
 		//x = the predicted 
-		u_ = (Mat_<double>(6, 1) << 0, 0, 0, 0, 0, 0);
+		u_ = Mat(STATE_VECTOR_SIZE, 1, CV_64F, Scalar(0));
+		covariance_ = Mat(STATE_VECTOR_SIZE, STATE_VECTOR_SIZE, CV_64F ,Scalar(0));
 		angleConstX = (Camera::reso_width * 0.5) / tan(Util::convertToRadians(Camera::hor_fov*0.5)); // degrees per pixel 
 		angleConstY = (Camera::reso_height * 0.5) / tan(Util::convertToRadians(Camera::vert_fov*0.5)); // degrees per pixel 
 		timeLastUpdate = 0;
@@ -54,6 +55,7 @@ namespace Thesis{
 		if (rows == 3){
 			matrix.at<double>(Z_POS, 0) = loc.z();
 		}
+		return matrix;
 	}
 
 	void KalmanFilter::observation(CoordinateReal pixelCo, Camera camera){
@@ -157,8 +159,22 @@ namespace Thesis{
 		// velocity  parts do not get updated.
 		//update the last run time
 		timeLastUpdate = curTime;
-		writeDataToFile(false);
+		writeDataToFile(true);
+		// update the covariance
+		cv::Mat G = motionModelJacobian(delT);
+		covariance_ = G * covariance_ * G.t() + R_;
+		Util::printMatrix(covariance_);
 		printTimeLastUpdate();
+	}
+
+	cv::Mat KalmanFilter::motionModelJacobian(double deltaTime){
+		// identity matrix + the delta t's
+		Mat G = Mat::eye(STATE_VECTOR_SIZE,STATE_VECTOR_SIZE, CV_64F);
+		// add the delta t's to the respective positions
+		G.at<double>(0, 3) = deltaTime;
+		G.at<double>(1, 4) = deltaTime;
+		G.at<double>(2, 5) = deltaTime;
+		return G;
 	}
 
 	void KalmanFilter::writeDataToFile(bool isPrediction){

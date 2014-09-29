@@ -12,6 +12,7 @@ namespace Thesis{
 	class KalmanFilter
 	{
 	public:
+		static const int STATE_VECTOR_SIZE = 6;
 		//setup
 		KalmanFilter();
 		~KalmanFilter();
@@ -40,8 +41,8 @@ namespace Thesis{
 		double timeLastUpdate;
 		// the four required kalman filter fields
 		cv::Mat covariance_;
-		cv::Mat q_;
-		cv::Mat r_;
+		cv::Mat Q_;
+		cv::Mat R_;
 		cv::Mat u_;
 		//prediction steps
 		cv::Mat predictState(cv::Mat controlInput);
@@ -51,8 +52,11 @@ namespace Thesis{
 		cv::Mat getInnovation(Mat obs, Mat expectedObs);
 		cv::Mat updateStep(Mat kalmanProduct);
 		cv::Mat covarianceOperation();
+		cv::Mat H_stereoJacobian();
+		cv::Mat H_singleCameraJacobian();
 		cv::Mat getCurrentState(){ return u_; }
 		cv::Mat buildObsMat(int rows, CoordinateReal loc);
+		cv::Mat motionModelJacobian(double deltaTime);
 		void writeDataToFile(bool isPrediction);
 	};
 }

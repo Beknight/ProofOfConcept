@@ -219,6 +219,7 @@ void main(int argc, char *argv[])
 				surfing = false;
 			}
 			if (!found){
+				cout << "initialising kalman filter" << endl;
 				kalman.initialise(real);
 			}
 			foundInBoth = false;
