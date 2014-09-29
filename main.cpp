@@ -25,11 +25,14 @@ bool surfing = false;
 bool leftDebug = false;
 bool rightDebug = false;
 bool record = false;
+bool hsv = false;
 void main(int argc, char *argv[])
 {
 	Mat emptyFrame = Mat::zeros(Camera::reso_height, Camera::reso_width, CV_8UC3);
 	Thesis::FastTracking fastTrack(16);
 	Thesis::KalmanFilter kalman;
+	kalman.initialise(CoordinateReal(0, 0, 0));
+	kalman.openFile();
 	// the two stereoscope images
 	Camera one(0,-125,0,0,0,90);
 	Camera two(2, 125,0,0,0,90);
@@ -37,9 +40,8 @@ void main(int argc, char *argv[])
 	VideoWriter writeTwo;
 	VideoCapture capOne;
 	VideoCapture capTwo;
+	double framesPerSecond = 1 / 10.0;
 	//open the recorders
-	//writeOne.open("../../../../ThesisImages/leftFast.avi", 0, 12, cv::Size(864, 480), true);
-	//writeTwo.open("../../../../ThesisImages/rightFast.avi", 0, 12, cv::Size(864, 480), true);
 	FeatureExtraction surf(5000);
 	Stereoscope stereo;
 	Util util;
@@ -53,17 +55,47 @@ void main(int argc, char *argv[])
 	cv::Mat frameRight;
 	cv::Mat prevFrameLeft;
 	cv::Mat prevFrameRight;
-	string left = "../../../../ThesisImages/left.avi";
-	string right = "../../../../ThesisImages/right.avi";
-	// check if you going to run simulation or not
-	cout << " run simulation: 's' or normal 'n'" << endl;
+
+	// check if you going to run simulation or not or record
+	cout << " run simulation: 's' or normal 'n' or 'o'" << endl;
 	imshow("main", emptyFrame);
 	char command = waitKey(0);
+	string left = "../../../../ThesisImages/left.avi";
+	string right = "../../../../ThesisImages/right.avi";
+
 	commands(command);
-	if (simulation){
+	//==========hsv values=======================
+	cv::Mat hsvFrame;
+	cv::Mat threshold;
+	int iLowH = 14;
+	int iHighH = 179;
+
+	int iLowS = 131;
+	int iHighS = 255;
+
+	int iLowV = 57;
+	int iHighV = 255;
+	
+	//=================================
+
+	if (record){
+		writeOne.open("../../../../ThesisImages/leftFast.avi", 0, 15, cv::Size(864, 480), true);
+		writeTwo.open("../../../../ThesisImages/rightFast.avi", 0, 15, cv::Size(864, 480), true);
+	}else if (simulation){
 		capOne.open(left);
 		capTwo.open(right);
 		assert(capOne.isOpened() && capTwo.isOpened());
+	}
+	else if (hsv){
+		//Create trackbars in "Control" window
+		cvCreateTrackbar("LowH", "main", &iLowH, 179); //Hue (0 - 179)
+		cvCreateTrackbar("HighH", "main", &iHighH, 179);
+
+		cvCreateTrackbar("LowS", "main", &iLowS, 255); //Saturation (0 - 255)
+		cvCreateTrackbar("HighS", "main", &iHighS, 255);
+
+		cvCreateTrackbar("LowV", "main", &iLowV, 255); //Value (0 - 255)
+		cvCreateTrackbar("HighV", "main", &iHighV, 255);
 	}
 	else{
 		surf.addImageToLib("backToTheFutureCover.jpg");
@@ -72,8 +104,9 @@ void main(int argc, char *argv[])
 	CoordinateReal rightLoc;
 	while (running){
 		const clock_t beginTime = clock();
-		command = waitKey(3);
+		command = waitKey(1);
 		commands(command);
+		kalman.predictState();
 		int thickness = -1;
 		int lineType = 8;
 		if (!simulation){
@@ -91,9 +124,25 @@ void main(int argc, char *argv[])
 			// means it is simulation: i.e frames come from a video
 			capOne >> frameLeft;
 			capTwo >> frameRight;
+			if (hsv){
+				//convert the frame into hsv
+				cvtColor(frameRight, hsvFrame, COLOR_BGR2HSV);
+				inRange(hsvFrame, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), threshold);
+				blur(threshold, threshold, cv::Size(20, 20));
+				cv::threshold(threshold,threshold,60,255,THRESH_BINARY);
+				////morphological opening (remove small objects from the foreground)
+				//erode(threshold, threshold, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
+				//dilate(threshold, threshold, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
+				//dilate(threshold, threshold, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
+				//erode(threshold, threshold, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
+				imshow("imageTwo", hsvFrame);
+				imshow("hsv", threshold);
+			}
 		}
-		//writeOne.write(frameLeft);
-		//writeTwo.write(frameRight);
+		if (record){
+			writeOne.write(frameLeft);
+			writeTwo.write(frameRight);
+		}
 		if (command == ' '){
 			//left frame =============================
 			std::vector<CoordinateReal> coordLeft = surf.detect(frameLeft, true, found, leftRealRect);
@@ -139,10 +188,12 @@ void main(int argc, char *argv[])
 			//}
 			found = true;
 		}
-		else{
+		else if(!record){
 			if (once){
-				leftLoc = fastTrack.findObject(frameLeft, prevFrameLeft, leftDebug);
-				rightLoc = fastTrack.findObject(frameRight, prevFrameRight, rightDebug);
+				CoordinateReal leftCameraLoc = kalman.expectedLocObs(one);
+				CoordinateReal rightCameraLoc = kalman.expectedLocObs(two);
+				leftLoc = fastTrack.findObject(frameLeft, prevFrameLeft, leftCameraLoc,leftDebug);
+				rightLoc = fastTrack.findObject(frameRight, prevFrameRight, rightCameraLoc ,rightDebug);
 			}
 			frameLeft.copyTo(prevFrameLeft);
 			frameRight.copyTo(prevFrameRight);
@@ -156,31 +207,48 @@ void main(int argc, char *argv[])
 				thickness,
 				lineType);
 		}
-		cv::imshow("left", frameLeft);
-		cv::imshow("right", frameRight);
-		foundInBoth = Util::isInBothFrames(leftLoc, rightLoc);
 		
+		foundInBoth = Util::isInBothFrames(leftLoc, rightLoc);
+	
 		if (foundInBoth){
-			cout << "found in both" << endl;
 			CoordinateReal real = stereo.getLocation(leftLoc, rightLoc);
 			cout << "z: " << real.z() << " x: " << real.x() << " y: " << real.y();
-			kalman.initialise(real);
-			cv::imshow("left", frameLeft);
-			cv::imshow("right", frameRight);
-			cout << "time in seconds" << float(clock() - beginTime) / CLOCKS_PER_SEC << endl;
+			//cout << "time in seconds" << float(clock() - beginTime) / CLOCKS_PER_SEC << endl;
 			if (surfing){
 				waitKey(0);
 				surfing = false;
 			}
-			kalman.initialise(real);
-			kalman.expectedObservation(one);
+			if (!found){
+				kalman.initialise(real);
+			}
+			foundInBoth = false;
+			found = true;
 		}
+		cv::imshow("left", frameLeft);
+		cv::imshow("right", frameRight);
+		double timeElapsed = double(clock() - beginTime) / CLOCKS_PER_SEC;
+		double waitDelta = framesPerSecond - timeElapsed;
+		
+		if (waitDelta > 0){
+			waitKey(waitDelta*1000);
+		}
+		cout << "fps:" << 1/(double(clock() - beginTime) / CLOCKS_PER_SEC) << endl;
 	}
+	kalman.closeFile();
 	return;
 }
 
 void commands(char c){
 	switch (c){
+	case 'h':
+		hsv = true;
+		simulation = true;
+
+		break;
+	case 'o':
+		record = true;
+		simulation = false;
+		break;
 	case 'x':
 	// exit 
 		running = false;
@@ -204,6 +272,7 @@ void commands(char c){
 	case 's':
 	//simulation mode
 		simulation = true;
+		record = false;
 		break;
 	case 'p':
 		waitKey(0);
@@ -211,6 +280,7 @@ void commands(char c){
 	case 'n':
 	//normal mode
 		simulation = false;
+		record = false;
 		break;
 	case 'k':
 		rightDebug = true;
