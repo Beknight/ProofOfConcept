@@ -11,6 +11,7 @@
 #include "Util.h"
 #include "KalmanFilter.h"
 #include "FastTracking.h"
+#include "Stats.h"
 using namespace cv;
 using namespace std;
 // functions
@@ -40,6 +41,7 @@ void main(int argc, char *argv[])
 	VideoWriter writeTwo;
 	VideoCapture capOne;
 	VideoCapture capTwo;
+	Thesis::Stats stat;
 	double framesPerSecond = 1 / 10.0;
 	//open the recorders
 	FeatureExtraction surf(5000);
@@ -60,8 +62,8 @@ void main(int argc, char *argv[])
 	cout << " run simulation: 's' or normal 'n' or 'o'" << endl;
 	imshow("main", emptyFrame);
 	char command = waitKey(0);
-	string left = "../../../../ThesisImages/left.avi";
-	string right = "../../../../ThesisImages/right.avi";
+	string left = "../../../../ThesisImages/leftTen.avi";
+	string right = "../../../../ThesisImages/rightTen.avi";
 
 	commands(command);
 	//==========hsv values=======================
@@ -77,16 +79,17 @@ void main(int argc, char *argv[])
 	int iHighV = 255;
 	
 	//=================================
-
+	double elapsedTime = 0;
+	double waitDelta = 0;	
 	if (record){
-		writeOne.open("../../../../ThesisImages/leftFast.avi", 0, 15, cv::Size(864, 480), true);
-		writeTwo.open("../../../../ThesisImages/rightFast.avi", 0, 15, cv::Size(864, 480), true);
+		writeOne.open("../../../../ThesisImages/leftTen.avi", 0, 10, cv::Size(864, 480), true);
+		writeTwo.open("../../../../ThesisImages/rightTen.avi", 0, 10, cv::Size(864, 480), true);
 	}else if (simulation){
 		capOne.open(left);
 		capTwo.open(right);
 		assert(capOne.isOpened() && capTwo.isOpened());
 	}
-	else if (hsv){
+	 if (hsv){
 		//Create trackbars in "Control" window
 		cvCreateTrackbar("LowH", "main", &iLowH, 179); //Hue (0 - 179)
 		cvCreateTrackbar("HighH", "main", &iHighH, 179);
@@ -97,14 +100,14 @@ void main(int argc, char *argv[])
 		cvCreateTrackbar("LowV", "main", &iLowV, 255); //Value (0 - 255)
 		cvCreateTrackbar("HighV", "main", &iHighV, 255);
 	}
-	else{
+	if(!simulation){
+		cout << " adding" << endl;
 		surf.addImageToLib("backToTheFutureCover.jpg");
 	}
 	CoordinateReal leftLoc;
 	CoordinateReal rightLoc;
 	while (running){
-		const clock_t beginTime = clock();
-		command = waitKey(1);
+		clock_t beginTime = clock();
 		commands(command);
 		kalman.predictState();
 		int thickness = -1;
@@ -114,7 +117,7 @@ void main(int argc, char *argv[])
 			frameRight = two.grabFrame();
 		}
 		else{
-			// if last frame, release then reopen
+			 //if last frame, release then reopen
 			if (capOne.get(CV_CAP_PROP_POS_FRAMES) == (capOne.get(CV_CAP_PROP_FRAME_COUNT) - 1)){
 				capOne.release();
 				capTwo.release();
@@ -145,6 +148,7 @@ void main(int argc, char *argv[])
 		}
 		if (command == ' '){
 			//left frame =============================
+			cout << "pressedSpace " << endl;
 			std::vector<CoordinateReal> coordLeft = surf.detect(frameLeft, true, found, leftRealRect);
 			if (!coordLeft.empty()){
 				int thickness = -1;
@@ -189,6 +193,7 @@ void main(int argc, char *argv[])
 			found = true;
 		}
 		else if(!record){
+			cout << " fastTracking " << endl;
 			if (once){
 				CoordinateReal leftCameraLoc = kalman.expectedLocObs(one);
 				CoordinateReal rightCameraLoc = kalman.expectedLocObs(two);
@@ -214,26 +219,34 @@ void main(int argc, char *argv[])
 			CoordinateReal real = stereo.getLocation(leftLoc, rightLoc);
 			cout << "z: " << real.z() << " x: " << real.x() << " y: " << real.y();
 			//cout << "time in seconds" << float(clock() - beginTime) / CLOCKS_PER_SEC << endl;
-			if (surfing){
-				waitKey(0);
-				surfing = false;
-			}
-			if (!found){
-				cout << "initialising kalman filter" << endl;
-				kalman.initialise(real);
-			}
+			
+			//if (!found){
+				//cout << "initialising kalman filter" << endl;
+				//kalman.initialise(real);
+			//}
+			double curTime = double(clock())/CLOCKS_PER_SEC;
+			cout << "curTime" << curTime << endl;
+			stat.getVel(real, curTime);
 			foundInBoth = false;
 			found = true;
 		}
 		cv::imshow("left", frameLeft);
 		cv::imshow("right", frameRight);
-		double timeElapsed = double(clock() - beginTime) / CLOCKS_PER_SEC;
-		double waitDelta = framesPerSecond - timeElapsed;
-		
-		if (waitDelta > 0){
-			waitKey(waitDelta*1000);
+		command = waitKey(1);
+		if (surfing){
+			waitKey(0);
+			surfing = false;
 		}
-		cout << "fps:" << 1/(double(clock() - beginTime) / CLOCKS_PER_SEC) << endl;
+		clock_t end = clock();
+		elapsedTime = double(end - beginTime) / CLOCKS_PER_SEC;
+		waitDelta = framesPerSecond - elapsedTime;
+		if (waitDelta > 0){
+			command = waitKey(waitDelta* 1000);
+		}
+		 end = clock();
+		elapsedTime = double(end - beginTime) / CLOCKS_PER_SEC;
+		cout << "fps"  << 1 / elapsedTime << endl;
+
 	}
 	kalman.closeFile();
 	return;

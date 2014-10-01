@@ -22,6 +22,7 @@ namespace Thesis{
 		cv::Mat expectedStereoObservation();
 		void observation(CoordinateReal pixelCo, Camera camera);
 		void stereoObservation(CoordinateReal state);
+		
 		CoordinateReal getCurrentLocation();
 		cv::Mat getCurrentPrediction(){ return u_; };
 		// kalman filter run
@@ -41,9 +42,11 @@ namespace Thesis{
 		double timeLastUpdate;
 		// the four required kalman filter fields
 		cv::Mat covariance_;
-		cv::Mat Q_;
+		cv::Mat Q_Mono;
+		cv::Mat Q_Stereo;
 		cv::Mat R_;
 		cv::Mat u_;
+		cv::Mat H_Jacobian;
 		//prediction steps
 		cv::Mat predictState(cv::Mat controlInput);
 		cv::Mat predictionCovariance();
@@ -51,9 +54,10 @@ namespace Thesis{
 		cv::Mat kalmanGain(Mat jacobian, Mat obsNoise);
 		cv::Mat getInnovation(Mat obs, Mat expectedObs);
 		cv::Mat updateStep(Mat kalmanProduct);
-		cv::Mat covarianceOperation();
-		cv::Mat H_stereoJacobian();
-		cv::Mat H_singleCameraJacobian();
+		void updateCovariance(Mat K);
+		void setStereoHJac();
+		void setHJacobian(double angleX, double angleY, double delX, double delY, double delZ);
+		double H_JacPart(double top, double bot);
 		cv::Mat getCurrentState(){ return u_; }
 		cv::Mat buildObsMat(int rows, CoordinateReal loc);
 		cv::Mat motionModelJacobian(double deltaTime);

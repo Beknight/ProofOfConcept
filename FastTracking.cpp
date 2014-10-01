@@ -71,14 +71,15 @@ namespace Thesis{
 				contours = vector<vector<Point>>();
 				hiearchy = vector<Vec4i>();
 				findContours(throwSubMatrix, contours, hiearchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+			
 				if (contours.size() > 0){
 					vector < vector<Point> > reducedLargeContour;
 					reducedLargeContour.push_back(contours.at(contours.size() - 1));
 					foundObject = boundingRect(reducedLargeContour.at(0));
 					xPos = foundObject.x + foundObject.width / 2 + reducedSearch.x;
 					yPos = foundObject.y + foundObject.height / 2 + +reducedSearch.y;
-					objectLocation.x = (objectLocation.x + xPos)/2;
-					objectLocation.y = (objectLocation.y + yPos)/2;
+					objectLocation.x = objectLocation.x * 0.3 + xPos * 0.7;
+					objectLocation.y = objectLocation.y * 0.3 + yPos * 0.7;
 				}
 			}
 		} else if (!found){
