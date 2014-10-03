@@ -75,28 +75,51 @@ namespace Thesis{
 
 	void KalmanFilter::updateCovariance(Mat k){
 		//covariance = (I - KH)* covariance
+		Mat firstMultiple = k * H_Jacobian;
+		int rows = firstMultiple.rows;
+		int cols = firstMultiple.cols;
+		Mat ident = Mat::eye(rows, cols, CV_64F);
 		//Mat innerBrackets = ;
+		Mat brackets = ident - firstMultiple;
+		covariance_ = brackets * covariance_;
 	}
 
 	void KalmanFilter::observation(CoordinateReal pixelCo, Camera camera){
-		// get the expect obs
-
+		Mat K;
+		Mat innovation;
+		// get the expect obs <-- this call automatically sets the H_Jacobian 
+		Mat expectedObs = expectedMonoObservation(camera);
+		Mat obs = buildObsMat(2, pixelCo);
 		//get the innovation
-
+		innovation = obs - expectedObs;
 		//kalman gain 
-		
+		Mat insideBrackets = H_Jacobian * covariance_ * H_Jacobian.t() + Q_Mono;
+		Mat kalmanGain = covariance_ * H_Jacobian.t() * insideBrackets.inv();
 		//update the step
+		u_ = u_ + kalmanGain* innovation;
+		updateCovariance(kalmanGain);
 	}
 
 	void KalmanFilter::stereoObservation(CoordinateReal obs){
 		// expected obs
 		Mat zDash = expectedStereoObservation();
 		Mat observation = buildObsMat(3, obs);
+		writeObsToFile(observation);
 		//innovation
 		Mat innovation = observation - zDash;
 		//kalman gain
-		
-		//update step
+		Mat insideBrackets = H_Jacobian * covariance_ * H_Jacobian.t() + Q_Stereo;
+		Mat kalmanGain = covariance_ * H_Jacobian.t() * insideBrackets.inv();
+		//update step prediction
+
+		u_ = u_ + kalmanGain* innovation;
+		cout << "updated state: " << endl;
+		Util::printMatrix(u_);
+		cout << "covariance : " << endl;
+		Util::printMatrix(covariance_);
+		cout << "_______________" << endl;
+		//update step covariance 
+		updateCovariance(kalmanGain);
 	}
 
 	cv::Mat KalmanFilter::getInnovation(Mat obs, Mat expectedObs){
@@ -113,7 +136,7 @@ namespace Thesis{
 
 	CoordinateReal KalmanFilter::expectedLocObs(Camera camera){
 		CoordinateReal realLoc;
-		Mat loc = expectedObservation(camera);
+		Mat loc = expectedMonoObservation(camera);
 		double x = loc.at<double>(0, 0);
 		double y = loc.at<double>(1, 0);
 		realLoc.setX(x);
@@ -121,7 +144,10 @@ namespace Thesis{
 		return realLoc;
 	}
 	void KalmanFilter::setStereoHJac(){
-		H_Jacobian = Mat::eye(3, 3, CV_64F);
+		H_Jacobian = Mat::eye(3, 6, CV_64F);
+		// zero the last bottom right three elements
+		cout << " h_jac " << endl;
+		Util::printMatrix(H_Jacobian);
 	}
 	Mat KalmanFilter::expectedStereoObservation(){
 		// the expected observation 
@@ -134,10 +160,8 @@ namespace Thesis{
 		return expectedObs;
 	}
 
-	Mat KalmanFilter::expectedObservation(Camera camera){
+	Mat KalmanFilter::expectedMonoObservation(Camera camera){
 		Mat expectedObs = (Mat_<double>(2, 1) << 0, 0);
-		Mat hJacobian = Mat(2, 3, CV_64F, Scalar(0));
-
 		CoordinateReal cameraLoc(camera.location().x(), camera.location().y(), camera.location().z());
 		// distance is delx + dely +delz all squared
 		double angleX = 0;
@@ -174,7 +198,7 @@ namespace Thesis{
 		double zetaFirst = 0;
 		double omegaFirst = 0;
 		//zero the matrix
-		H_Jacobian = Mat(2, 3, CV_64F, Scalar(0));
+		H_Jacobian = Mat(2, 6, CV_64F, Scalar(0));
 					//zeta * sec^2(gamma) * partial
 		zetaFirst = angleConstX * (1 / cos(angleX)) * (1 / cos(angleX));
 		omegaFirst = angleConstY * (1 / cos(angleY)) * (1 / cos(angleY));
@@ -232,7 +256,11 @@ namespace Thesis{
 		//Util::printMatrix(covariance_);
 		//printTimeLastUpdate();
 		timeLastUpdate = nowTime;
-
+		cout << "prediction state: =================" << endl;
+		Util::printMatrix(u_);
+		cout << "covariance : " << endl;
+		Util::printMatrix(covariance_);
+		cout << "_______________" << endl;
 	}
 
 	cv::Mat KalmanFilter::motionModelJacobian(double deltaTime){
@@ -243,6 +271,17 @@ namespace Thesis{
 		G.at<double>(1, 4) = deltaTime;
 		G.at<double>(2, 5) = deltaTime;
 		return G;
+	}
+
+	void KalmanFilter::writeObsToFile(Mat obs){
+		string outPutString;
+		string x = to_string(obs.at<double>(X_POS, 0));
+		string y = to_string(obs.at<double>(Y_POS, 0));
+		string z = to_string(obs.at<double>(Z_POS, 0));
+		string colon = " : ";
+		outPutString = x + colon + y + colon + z + colon + 
+	"0" + colon + "0" + colon + "0" + "0" + "0" + "\n";
+		obsFile_ << outPutString;
 	}
 
 	void KalmanFilter::writeDataToFile(bool isPrediction){
@@ -262,9 +301,11 @@ namespace Thesis{
 
 	void KalmanFilter::openFile(){
 		dataFile_.open("../../../../ThesisImages/data.txt");
+		obsFile_.open("../../../../ThesisImages/obsData.txt");
 	}
 
 	void KalmanFilter::closeFile(){
 		dataFile_.close();
+		obsFile_.close();
 	}
 }

@@ -16,6 +16,7 @@ using namespace cv;
 using namespace std;
 // functions
 void commands(char command);
+void camCount(char command);
 // flags
 bool simulation = false;
 bool running = true;
@@ -27,6 +28,8 @@ bool leftDebug = false;
 bool rightDebug = false;
 bool record = false;
 bool hsv = false;
+bool multiCams = false;
+
 void main(int argc, char *argv[])
 {
 	Mat emptyFrame = Mat::zeros(Camera::reso_height, Camera::reso_width, CV_8UC3);
@@ -37,6 +40,9 @@ void main(int argc, char *argv[])
 	// the two stereoscope images
 	Camera one(0,-125,0,0,0,90);
 	Camera two(2, 125,0,0,0,90);
+	// list of cameras and cameraLocs
+	std::vector<Camera> cameraList;
+	std::vector<CoordinateReal> locList;
 	VideoWriter writeOne ;
 	VideoWriter writeTwo;
 	VideoCapture capOne;
@@ -59,13 +65,23 @@ void main(int argc, char *argv[])
 	cv::Mat prevFrameRight;
 
 	// check if you going to run simulation or not or record
-	cout << " run simulation: 's' or normal 'n' or 'o'" << endl;
+	cout << " run simulation: 's' or normal: 'n' or record 'o' or threeCameras 'c' " << endl;
 	imshow("main", emptyFrame);
 	char command = waitKey(0);
+
 	string left = "../../../../ThesisImages/leftTen.avi";
 	string right = "../../../../ThesisImages/rightTen.avi";
 
 	commands(command);
+	emptyFrame = Mat::ones(10, 10, CV_64F);
+	imshow("main", emptyFrame);
+	command = waitKey(0);
+	camCount(command);
+	// checkt the cam count 
+	if (multiCams){
+		//load in all the cameras
+		//Camera(3, )
+	}
 	//==========hsv values=======================
 	cv::Mat hsvFrame;
 	cv::Mat threshold;
@@ -109,7 +125,10 @@ void main(int argc, char *argv[])
 	while (running){
 		clock_t beginTime = clock();
 		commands(command);
-		kalman.predictState();
+		if (found){
+			kalman.predictState();
+			kalman.printCurrentState();
+		}
 		int thickness = -1;
 		int lineType = 8;
 		if (!simulation){
@@ -133,11 +152,6 @@ void main(int argc, char *argv[])
 				inRange(hsvFrame, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), threshold);
 				blur(threshold, threshold, cv::Size(20, 20));
 				cv::threshold(threshold,threshold,60,255,THRESH_BINARY);
-				////morphological opening (remove small objects from the foreground)
-				//erode(threshold, threshold, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-				//dilate(threshold, threshold, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-				//dilate(threshold, threshold, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-				//erode(threshold, threshold, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
 				imshow("imageTwo", hsvFrame);
 				imshow("hsv", threshold);
 			}
@@ -182,14 +196,6 @@ void main(int argc, char *argv[])
 				rightRealRect = util.getSizedRect(rightRect, one.reso_height, one.reso_width, 0.1);
 				rightLoc = coordRight[0];
 			}
-			////char curPressed = cvWaitKey(100);
-			//if (curPressed == pressedKey){
-			//	one.writeLatestImageToFile("../../../../ThesisImages/povTest.jpg");
-			//	running = false;
-			//}
-			//else if (curPressed == ' '){
-			//	running = false;
-			//}
 			found = true;
 		}
 		else if(!record){
@@ -199,6 +205,10 @@ void main(int argc, char *argv[])
 				CoordinateReal rightCameraLoc = kalman.expectedLocObs(two);
 				leftLoc = fastTrack.findObject(frameLeft, prevFrameLeft, leftCameraLoc,leftDebug);
 				rightLoc = fastTrack.findObject(frameRight, prevFrameRight, rightCameraLoc ,rightDebug);
+				// go through the list of locations 
+				for (int i = 0; i < cameraList.size(); i++){
+
+				}
 			}
 			frameLeft.copyTo(prevFrameLeft);
 			frameRight.copyTo(prevFrameRight);
@@ -217,13 +227,16 @@ void main(int argc, char *argv[])
 	
 		if (foundInBoth){
 			CoordinateReal real = stereo.getLocation(leftLoc, rightLoc);
-			cout << "z: " << real.z() << " x: " << real.x() << " y: " << real.y();
+			//print the current location
 			//cout << "time in seconds" << float(clock() - beginTime) / CLOCKS_PER_SEC << endl;
-			
-			//if (!found){
-				//cout << "initialising kalman filter" << endl;
-				//kalman.initialise(real);
-			//}
+			if (!found){
+				cout << "initialising kalman filter" << endl;
+				kalman.initialise(real);
+			}
+			else {
+				kalman.stereoObservation(real);
+			}
+			// 
 			double curTime = double(clock())/CLOCKS_PER_SEC;
 			cout << "curTime" << curTime << endl;
 			stat.getVel(real, curTime);
@@ -250,6 +263,14 @@ void main(int argc, char *argv[])
 	}
 	kalman.closeFile();
 	return;
+}
+
+void camCount(char c){
+	switch (c){
+	case '3':
+		//multiple cameras
+		break;
+	}
 }
 
 void commands(char c){

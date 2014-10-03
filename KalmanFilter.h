@@ -17,7 +17,7 @@ namespace Thesis{
 		KalmanFilter();
 		~KalmanFilter();
 		void initialise(CoordinateReal initialPosition);
-		cv::Mat expectedObservation(Camera camera);
+		cv::Mat expectedMonoObservation(Camera camera);
 		CoordinateReal expectedLocObs(Camera camera);
 		cv::Mat expectedStereoObservation();
 		void observation(CoordinateReal pixelCo, Camera camera);
@@ -33,6 +33,7 @@ namespace Thesis{
 		void printTimeLastUpdate(){ cout << "lastUpdate: " << timeLastUpdate << endl; };
 	private:
 		ofstream dataFile_;
+		ofstream obsFile_;
 		// the angle constants that we need for 
 		double angleConstX = 0;
 		double angleConstY = 0;
@@ -47,6 +48,7 @@ namespace Thesis{
 		cv::Mat R_;
 		cv::Mat u_;
 		cv::Mat H_Jacobian;
+		void writeObsToFile(Mat obs);
 		//prediction steps
 		cv::Mat predictState(cv::Mat controlInput);
 		cv::Mat predictionCovariance();
