@@ -44,6 +44,10 @@ namespace Thesis{
 		u_.at<double>(X_POS, 0) = position.x();
 		u_.at<double>(Y_POS, 0) = position.y();
 		u_.at<double>(Z_POS, 0) = position.z();
+		u_.at<double>(X_VEL, 0) = 0;
+		u_.at<double>(Y_VEL, 0) = 0;
+		u_.at<double>(Z_VEL, 0) = 0;
+
 		// update the time
 		timeLastUpdate = double (clock()) / CLOCKS_PER_SEC;
 		//printTimeLastUpdate();
@@ -114,9 +118,9 @@ namespace Thesis{
 
 		u_ = u_ + kalmanGain* innovation;
 		cout << "updated state: " << endl;
-		Util::printMatrix(u_);
+		//Util::printMatrix(u_);
 		cout << "covariance : " << endl;
-		Util::printMatrix(covariance_);
+		//Util::printMatrix(covariance_);
 		cout << "_______________" << endl;
 		//update step covariance 
 		updateCovariance(kalmanGain);
@@ -141,13 +145,14 @@ namespace Thesis{
 		double y = loc.at<double>(1, 0);
 		realLoc.setX(x);
 		realLoc.setY(y);
+		cout << "expected x: " << x << " epxected y: " << y << endl;
 		return realLoc;
 	}
 	void KalmanFilter::setStereoHJac(){
 		H_Jacobian = Mat::eye(3, 6, CV_64F);
 		// zero the last bottom right three elements
 		cout << " h_jac " << endl;
-		Util::printMatrix(H_Jacobian);
+		//Util::printMatrix(H_Jacobian);
 	}
 	Mat KalmanFilter::expectedStereoObservation(){
 		// the expected observation 
@@ -217,7 +222,6 @@ namespace Thesis{
 		H_Jacobian.at<double>(0, 2) = zetaZ;
 		H_Jacobian.at<double>(1, 1) = omegaY;
 		H_Jacobian.at<double>(1, 2) = omegaZ;
-		Util::printMatrix(H_Jacobian);
 	}
 
 	double KalmanFilter::H_JacPart(double top, double bot){
@@ -236,6 +240,7 @@ namespace Thesis{
 	}
 
 	void KalmanFilter::predictState(){
+		writeDataToFile(true);
 		clock_t curTime = clock();
 		double nowTime = double(curTime)/ CLOCKS_PER_SEC;
 		double delT = 0;
@@ -248,18 +253,17 @@ namespace Thesis{
 		u_.at<double>(Z_POS, 0) = u_.at<double>(Z_POS, 0) + u_.at<double>(Z_VEL, 0) * delT;
 		// velocity  parts do not get updated.
 		//update the last run time
-		writeDataToFile(true);
 		// update the covariance
 		cv::Mat G = motionModelJacobian(delT);
-		Util::printMatrix(G);
+		//Util::printMatrix(G);
 		covariance_ = G * covariance_ * G.t() + R_;
 		//Util::printMatrix(covariance_);
 		//printTimeLastUpdate();
 		timeLastUpdate = nowTime;
 		cout << "prediction state: =================" << endl;
-		Util::printMatrix(u_);
+		//Util::printMatrix(u_);
 		cout << "covariance : " << endl;
-		Util::printMatrix(covariance_);
+		//Util::printMatrix(covariance_);
 		cout << "_______________" << endl;
 	}
 

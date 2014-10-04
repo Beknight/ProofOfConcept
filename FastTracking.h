@@ -24,10 +24,10 @@ namespace Thesis{
 		int iLowH		= 14;
 		int iHighH		= 179;
 		//S================
-		int iLowS		= 131;
+		int iLowS		= 80;   //night time 80 // day time 131
 		int iHighS		= 255;
 		//V================
-		int iLowV		= 57;
+		int iLowV		= 70; //night time 70 // day time 57
 		int iHighV		= 255;
 	};
 }

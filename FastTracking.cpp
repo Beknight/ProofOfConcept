@@ -85,10 +85,10 @@ namespace Thesis{
 		} else if (!found){
 			contours = vector<vector<Point>>();
 			hiearchy = vector<Vec4i>();
-			Rect smallRect = Util::getQuadrantRect(currentBelief);
+			/*Rect smallRect = Util::getQuadrantRect(currentBelief);
 			Mat temp = second(smallRect);
-			imshow("quad", temp);
-			Mat newThresh = colorSearch(temp);
+			imshow("quad", temp);*/
+			Mat newThresh = colorSearch(second);
 			findContours(newThresh, contours, hiearchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 			
 			found = (contours.size() > 0);
@@ -97,8 +97,8 @@ namespace Thesis{
 				largestContour.push_back(contours.at(contours.size() - 1));
 				// now we have found it we will draw a dot in the middle
 				foundObject = boundingRect(largestContour.at(0));
-				int xPos = foundObject.x + foundObject.width / 2 + smallRect.x;
-				int yPos = foundObject.y + foundObject.height / 2 + smallRect.y;
+				int xPos = foundObject.x + foundObject.width / 2;// +second.x;
+				int yPos = foundObject.y + foundObject.height / 2;// +second.y;
 				objectLocation.x = xPos;
 				objectLocation.y = yPos;
 			}	

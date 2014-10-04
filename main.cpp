@@ -26,10 +26,11 @@ bool pause = false;
 bool surfing = false;
 bool leftDebug = false;
 bool rightDebug = false;
+bool threeDebug = false;
 bool record = false;
 bool hsv = false;
 bool multiCams = false;
-
+bool cross = false;
 void main(int argc, char *argv[])
 {
 	Mat emptyFrame = Mat::zeros(Camera::reso_height, Camera::reso_width, CV_8UC3);
@@ -40,14 +41,22 @@ void main(int argc, char *argv[])
 	// the two stereoscope images
 	Camera one(0,-125,0,0,0,90);
 	Camera two(2, 125,0,0,0,90);
+	Camera three;
 	// list of cameras and cameraLocs
 	std::vector<Camera> cameraList;
 	std::vector<CoordinateReal> locList;
 	VideoWriter writeOne ;
 	VideoWriter writeTwo;
+	VideoWriter writeThree;
 	VideoCapture capOne;
 	VideoCapture capTwo;
+	VideoCapture capThree;
 	Thesis::Stats stat;
+	cv::Point2d horizontalOne(0,Camera::reso_height/2);
+	cv::Point2d horizontalTwo(Camera::reso_width, Camera::reso_height/2);
+	cv::Point2d verticalOne(Camera::reso_width / 2, 0);
+	cv::Point2d verticalTwo(Camera::reso_width / 2, Camera::reso_height);
+
 	double framesPerSecond = 1 / 10.0;
 	//open the recorders
 	FeatureExtraction surf(5000);
@@ -55,14 +64,17 @@ void main(int argc, char *argv[])
 	Util util;
 	bool once = false;
 	bool foundInBoth = false;
+	bool foundInMono = false;
 	std::vector<cv::Point2f> leftRect(4);
 	cv::Rect leftRealRect;
 	cv::Rect rightRealRect;
 	std::vector<cv::Point2f> rightRect(4);
 	cv::Mat frameLeft;
 	cv::Mat frameRight;
+	cv::Mat frameThree;
 	cv::Mat prevFrameLeft;
 	cv::Mat prevFrameRight;
+	cv::Mat prevFrameThree;
 
 	// check if you going to run simulation or not or record
 	cout << " run simulation: 's' or normal: 'n' or record 'o' or threeCameras 'c' " << endl;
@@ -71,7 +83,7 @@ void main(int argc, char *argv[])
 
 	string left = "../../../../ThesisImages/leftTen.avi";
 	string right = "../../../../ThesisImages/rightTen.avi";
-
+	string mid = "../../../../ThesisImages/midTen.avi";
 	commands(command);
 	emptyFrame = Mat::ones(10, 10, CV_64F);
 	imshow("main", emptyFrame);
@@ -80,7 +92,7 @@ void main(int argc, char *argv[])
 	// checkt the cam count 
 	if (multiCams){
 		//load in all the cameras
-		//Camera(3, )
+		three = Camera(3, 200, -60, 480, 7,111);
 	}
 	//==========hsv values=======================
 	cv::Mat hsvFrame;
@@ -88,7 +100,7 @@ void main(int argc, char *argv[])
 	int iLowH = 14;
 	int iHighH = 179;
 
-	int iLowS = 131;
+	int iLowS = 80;
 	int iHighS = 255;
 
 	int iLowV = 57;
@@ -100,9 +112,11 @@ void main(int argc, char *argv[])
 	if (record){
 		writeOne.open("../../../../ThesisImages/leftTen.avi", 0, 10, cv::Size(864, 480), true);
 		writeTwo.open("../../../../ThesisImages/rightTen.avi", 0, 10, cv::Size(864, 480), true);
+		writeThree.open("../../../../ThesisImages/midTen.avi", 0, 10, cv::Size(864, 480), true);
 	}else if (simulation){
 		capOne.open(left);
 		capTwo.open(right);
+		capThree.open(mid);
 		assert(capOne.isOpened() && capTwo.isOpened());
 	}
 	 if (hsv){
@@ -122,6 +136,7 @@ void main(int argc, char *argv[])
 	}
 	CoordinateReal leftLoc;
 	CoordinateReal rightLoc;
+	CoordinateReal threeLoc;
 	while (running){
 		clock_t beginTime = clock();
 		commands(command);
@@ -131,9 +146,13 @@ void main(int argc, char *argv[])
 		}
 		int thickness = -1;
 		int lineType = 8;
+		//normal running
 		if (!simulation){
 			frameLeft = one.grabFrame();
 			frameRight = two.grabFrame();
+			if (multiCams){
+				frameThree = three.grabFrame();
+			}
 		}
 		else{
 			 //if last frame, release then reopen
@@ -142,76 +161,106 @@ void main(int argc, char *argv[])
 				capTwo.release();
 				capOne.open(left);
 				capTwo.open(right);
+				if (multiCams){
+					capThree.release();
+					capThree.open(mid);
+				}
 			}
 			// means it is simulation: i.e frames come from a video
 			capOne >> frameLeft;
 			capTwo >> frameRight;
+			capThree >> frameThree;
 			if (hsv){
 				//convert the frame into hsv
 				cvtColor(frameRight, hsvFrame, COLOR_BGR2HSV);
 				inRange(hsvFrame, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), threshold);
 				blur(threshold, threshold, cv::Size(20, 20));
-				cv::threshold(threshold,threshold,60,255,THRESH_BINARY);
-				imshow("imageTwo", hsvFrame);
+				cv::threshold(threshold, threshold, 60, 255, THRESH_BINARY);
+				//imshow("imageTwo", hsvFrame);
 				imshow("hsv", threshold);
 			}
 		}
+	
 		if (record){
 			writeOne.write(frameLeft);
 			writeTwo.write(frameRight);
+			if (multiCams){
+				writeThree.write(frameThree);
+			}
 		}
 		if (command == ' '){
-			//left frame =============================
-			cout << "pressedSpace " << endl;
-			std::vector<CoordinateReal> coordLeft = surf.detect(frameLeft, true, found, leftRealRect);
-			if (!coordLeft.empty()){
-				int thickness = -1;
-				int lineType = 8;
-				cv::circle(frameLeft, cv::Point2f(coordLeft[0].x(), coordLeft[0].y()), 5,
-					cv::Scalar(0, 0, 255),
-					thickness,
-					lineType);
-				leftRect = surf.getSceneCorners();
-				line(frameLeft, leftRect[0], leftRect[1], cv::Scalar(0, 255, 0), 2); //TOP line
-				line(frameLeft, leftRect[1], leftRect[2], cv::Scalar(0, 0, 255), 2);
-				line(frameLeft, leftRect[2], leftRect[3], cv::Scalar(0, 255, 0), 2);
-				line(frameLeft, leftRect[3], leftRect[0], cv::Scalar(0, 255, 0), 2);
-				leftRealRect = util.getSizedRect(leftRect, one.reso_height, one.reso_width, 0.1);
-				leftLoc = coordLeft[0];
-			}
-			//right frame ==================================
-			std::vector<CoordinateReal> coordRight = surf.detect(frameRight, true, found, rightRealRect);
-			if (!coordRight.empty()){
-				int thickness = -1;
-				int lineType = 8;
-				cv::circle(frameRight, cv::Point2f(coordRight[0].x(), coordRight[0].y()), 5,
-					cv::Scalar(0, 0, 255),
-					thickness,
-					lineType);
-				rightRect = surf.getSceneCorners();
-				line(frameRight, rightRect[0], rightRect[1], cv::Scalar(0, 255, 0), 2); //TOP line
-				line(frameRight, rightRect[1], rightRect[2], cv::Scalar(0, 0, 255), 2);
-				line(frameRight, rightRect[2], rightRect[3], cv::Scalar(0, 255, 0), 2);
-				line(frameRight, rightRect[3], rightRect[0], cv::Scalar(0, 255, 0), 2);
-				rightRealRect = util.getSizedRect(rightRect, one.reso_height, one.reso_width, 0.1);
-				rightLoc = coordRight[0];
-			}
-			found = true;
+			////left frame =============================
+			//cout << "pressedSpace " << endl;
+			//std::vector<CoordinateReal> coordLeft = surf.detect(frameLeft, true, found, leftRealRect);
+			//if (!coordLeft.empty()){
+			//	int thickness = -1;
+			//	int lineType = 8;
+			//	cv::circle(frameLeft, cv::Point2f(coordLeft[0].x(), coordLeft[0].y()), 5,
+			//		cv::Scalar(0, 0, 255),
+			//		thickness,
+			//		lineType);
+			//	leftRect = surf.getSceneCorners();
+			//	line(frameLeft, leftRect[0], leftRect[1], cv::Scalar(0, 255, 0), 2); //TOP line
+			//	line(frameLeft, leftRect[1], leftRect[2], cv::Scalar(0, 0, 255), 2);
+			//	line(frameLeft, leftRect[2], leftRect[3], cv::Scalar(0, 255, 0), 2);
+			//	line(frameLeft, leftRect[3], leftRect[0], cv::Scalar(0, 255, 0), 2);
+			//	leftRealRect = util.getSizedRect(leftRect, one.reso_height, one.reso_width, 0.1);
+			//	leftLoc = coordLeft[0];
+			//}
+			////right frame ==================================
+			//std::vector<CoordinateReal> coordRight = surf.detect(frameRight, true, found, rightRealRect);
+			//if (!coordRight.empty()){
+			//	int thickness = -1;
+			//	int lineType = 8;
+			//	cv::circle(frameRight, cv::Point2f(coordRight[0].x(), coordRight[0].y()), 5,
+			//		cv::Scalar(0, 0, 255),
+			//		thickness,
+			//		lineType);
+			//	rightRect = surf.getSceneCorners();
+			//	line(frameRight, rightRect[0], rightRect[1], cv::Scalar(0, 255, 0), 2); //TOP line
+			//	line(frameRight, rightRect[1], rightRect[2], cv::Scalar(0, 0, 255), 2);
+			//	line(frameRight, rightRect[2], rightRect[3], cv::Scalar(0, 255, 0), 2);
+			//	line(frameRight, rightRect[3], rightRect[0], cv::Scalar(0, 255, 0), 2);
+			//	rightRealRect = util.getSizedRect(rightRect, one.reso_height, one.reso_width, 0.1);
+			//	rightLoc = coordRight[0];
+			//}
+			//if (multiCams){
+			//	std::vector<CoordinateReal> coordThrees = surf.detect(frameThree, true, false, leftRealRect);
+			//	CoordinateReal coordThree = coordThrees[0];
+			//	rightRect = surf.getSceneCorners();
+			//	line(frameThree, rightRect[0], rightRect[1], cv::Scalar(0, 255, 0), 2); //TOP line
+			//	line(frameThree, rightRect[1], rightRect[2], cv::Scalar(0, 0, 255), 2);
+			//	line(frameThree, rightRect[2], rightRect[3], cv::Scalar(0, 255, 0), 2);
+			//	line(frameThree, rightRect[3], rightRect[0], cv::Scalar(0, 255, 0), 2);
+			//	cout << " foundIN x: " << coordThree.x() << "found in y: " << coordThree.y() << endl;
+			//}
+			//found = true;
 		}
 		else if(!record){
 			cout << " fastTracking " << endl;
 			if (once){
-				CoordinateReal leftCameraLoc = kalman.expectedLocObs(one);
-				CoordinateReal rightCameraLoc = kalman.expectedLocObs(two);
+				CoordinateReal leftCameraLoc(0, 0, 0);
+				CoordinateReal rightCameraLoc(0,0,0);
+				if (found) {
+					leftCameraLoc = kalman.expectedLocObs(one);
+					rightCameraLoc = kalman.expectedLocObs(two);
+				}
 				leftLoc = fastTrack.findObject(frameLeft, prevFrameLeft, leftCameraLoc,leftDebug);
 				rightLoc = fastTrack.findObject(frameRight, prevFrameRight, rightCameraLoc ,rightDebug);
 				// go through the list of locations 
-				for (int i = 0; i < cameraList.size(); i++){
-
+				if (multiCams){
+					CoordinateReal miscCameraLoc(0, 0, 0);
+					if (found){
+						miscCameraLoc = kalman.expectedLocObs(three);
+					}
+					threeLoc = fastTrack.findObject(frameThree, prevFrameThree, miscCameraLoc, threeDebug);
 				}
 			}
 			frameLeft.copyTo(prevFrameLeft);
 			frameRight.copyTo(prevFrameRight);
+			if (multiCams){
+				frameThree.copyTo(prevFrameThree);
+			}
 			once = true;
 			cv::circle(frameLeft, cv::Point2f(leftLoc.x(), leftLoc.y()), 5,
 				cv::Scalar(0, 0, 255),
@@ -221,13 +270,20 @@ void main(int argc, char *argv[])
 				cv::Scalar(0, 0, 255),
 				thickness,
 				lineType);
+			cv::circle(frameThree, cv::Point2f(threeLoc.x(), threeLoc.y()), 5,
+				cv::Scalar(0, 0, 255),
+				thickness,
+				lineType);
 		}
-		
+		if (multiCams){
+			foundInMono = Util::isInFrame(threeLoc);
+		}
 		foundInBoth = Util::isInBothFrames(leftLoc, rightLoc);
-	
+	    
 		if (foundInBoth){
 			CoordinateReal real = stereo.getLocation(leftLoc, rightLoc);
 			//print the current location
+			cout << "x: " << real.x() << "y: " << real.y() << "z: " << real.z() << endl;
 			//cout << "time in seconds" << float(clock() - beginTime) / CLOCKS_PER_SEC << endl;
 			if (!found){
 				cout << "initialising kalman filter" << endl;
@@ -243,8 +299,28 @@ void main(int argc, char *argv[])
 			foundInBoth = false;
 			found = true;
 		}
+		if (foundInMono){
+			// pass the observation 
+			kalman.observation(threeLoc, three);
+			foundInMono = false;
+		}
+		if (cross){
+			// add cross to all the frames
+			line(frameRight, horizontalOne, horizontalTwo, cv::Scalar(0, 255, 0), 2); 
+			line(frameRight, verticalOne, verticalTwo, cv::Scalar(0, 0, 255), 2);
+			line(frameLeft, horizontalOne, horizontalTwo, cv::Scalar(0, 255, 0), 2);
+			line(frameLeft, verticalOne, verticalTwo, cv::Scalar(0, 0, 255), 2);
+			//multi cam
+			if (multiCams){
+				line(frameThree, horizontalOne, horizontalTwo, cv::Scalar(0, 255, 0), 2);
+				line(frameThree, verticalOne, verticalTwo, cv::Scalar(0, 0, 255), 2);
+			}
+		}
 		cv::imshow("left", frameLeft);
 		cv::imshow("right", frameRight);
+		if (multiCams){
+			cv::imshow("mid", frameThree);
+		}
 		command = waitKey(1);
 		if (surfing){
 			waitKey(0);
@@ -269,20 +345,29 @@ void camCount(char c){
 	switch (c){
 	case '3':
 		//multiple cameras
+		multiCams = true;
 		break;
 	}
 }
 
 void commands(char c){
 	switch (c){
+	case 'm':
+		multiCams = true;
+		break;
+	case 't':
+		threeDebug = !threeDebug;
+		break;
+	case 'c':
+		cross = !cross;
+		break;
 	case 'h':
 		hsv = true;
 		simulation = true;
-
 		break;
 	case 'o':
 		record = true;
-		simulation = false;
+		simulation = true;
 		break;
 	case 'x':
 	// exit 

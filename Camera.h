@@ -12,6 +12,7 @@ public:
 	static const int reso_width		= 864;
 	static const int hor_fov		= 50; //deg
 	static const int vert_fov		= 30; //deg
+	Camera(){};
 	Camera(int cameraNumber);
 	Camera(int camearaNumber, float x, float y, float z, double pitch, double yaw);
 	~Camera();
