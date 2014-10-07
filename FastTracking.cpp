@@ -130,6 +130,7 @@ namespace Thesis{
 		erode(threshold, threshold, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));*/
 				blur(threshold, threshold, cv::Size(20, 20));
 				cv::threshold(threshold,threshold,60,255,THRESH_BINARY);
+				//imshow("thresh", threshold);
 		return threshold;
 	}
 

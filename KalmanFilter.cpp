@@ -286,6 +286,7 @@ namespace Thesis{
 		outPutString = x + colon + y + colon + z + colon + 
 	"0" + colon + "0" + colon + "0" + "0" + "0" + "\n";
 		obsFile_ << outPutString;
+		cout << "output: " << outPutString << endl;
 	}
 
 	void KalmanFilter::writeDataToFile(bool isPrediction){

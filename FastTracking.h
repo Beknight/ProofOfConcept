@@ -21,13 +21,13 @@ namespace Thesis{
 		bool thresholdCheck(); // (?) we can threshold the image with the colours ? 
 		// our hsv values
 		//H================
-		int iLowH		= 14;
+		int iLowH		= 155; // outdoor 155 / 179
 		int iHighH		= 179;
 		//S================
-		int iLowS		= 80;   //night time 80 // day time 131
+		int iLowS		= 80;   //night time 80 // day time 131  // outdoor 75 / 255
 		int iHighS		= 255;
 		//V================
-		int iLowV		= 70; //night time 70 // day time 57
+		int iLowV		= 51; //night time 70 // day time 57 // outdoor 0 
 		int iHighV		= 255;
 	};
 }
