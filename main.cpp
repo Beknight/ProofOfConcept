@@ -12,6 +12,7 @@
 #include "KalmanFilter.h"
 #include "FastTracking.h"
 #include "Stats.h"
+#include <fstream>
 using namespace cv;
 using namespace std;
 // functions
@@ -34,7 +35,7 @@ bool cross = false;
 void main(int argc, char *argv[])
 {
 	Mat emptyFrame = Mat::zeros(Camera::reso_height, Camera::reso_width, CV_8UC3);
-	Thesis::FastTracking fastTrack(50);
+	Thesis::FastTracking fastTrack(20); //used to be 50, why? i dno
 	Thesis::KalmanFilter kalman;
 	kalman.initialise(CoordinateReal(0, 0, 0));
 	kalman.openFile();
@@ -56,7 +57,8 @@ void main(int argc, char *argv[])
 	cv::Point2d horizontalTwo(Camera::reso_width, Camera::reso_height/2);
 	cv::Point2d verticalOne(Camera::reso_width / 2, 0);
 	cv::Point2d verticalTwo(Camera::reso_width / 2, Camera::reso_height);
-
+	ofstream framesFile_;
+	framesFile_.open("../../../../ThesisImages/fps_ABSDIFF.txt");
 	double framesPerSecond = 1 / 10.0;
 	//open the recorders
 	FeatureExtraction surf(5000);
@@ -169,8 +171,9 @@ void main(int argc, char *argv[])
 			// means it is simulation: i.e frames come from a video
 			capOne >> frameLeft;
 			capTwo >> frameRight;
-			capThree >> frameThree;
-			
+			if (multiCams){
+				capThree >> frameThree;
+			}
 		}
 		if (hsv){
 			//convert the frame into hsv
@@ -238,43 +241,43 @@ void main(int argc, char *argv[])
 			found = true;
 		}
 		else if(!record){
-			//cout << " fastTracking " << endl;
-			//if (once){
-			//	CoordinateReal leftCameraLoc(0, 0, 0);
-			//	CoordinateReal rightCameraLoc(0,0,0);
-			//	if (found) {
-			//		leftCameraLoc = kalman.expectedLocObs(one);
-			//		rightCameraLoc = kalman.expectedLocObs(two);
-			//	}
-			//	leftLoc = fastTrack.findObject(frameLeft, prevFrameLeft, leftCameraLoc,leftDebug);
-			//	rightLoc = fastTrack.findObject(frameRight, prevFrameRight, rightCameraLoc ,rightDebug);
-			//	// go through the list of locations 
-			//	if (multiCams){
-			//		CoordinateReal miscCameraLoc(0, 0, 0);
-			//		if (found){
-			//			miscCameraLoc = kalman.expectedLocObs(three);
-			//		}
-			//		threeLoc = fastTrack.findObject(frameThree, prevFrameThree, miscCameraLoc, threeDebug);
-			//	}
-			//}
-			//frameLeft.copyTo(prevFrameLeft);
-			//frameRight.copyTo(prevFrameRight);
-			//if (multiCams){
-			//	frameThree.copyTo(prevFrameThree);
-			//}
-			//once = true;
-			//cv::circle(frameLeft, cv::Point2f(leftLoc.x(), leftLoc.y()), 5,
-			//	cv::Scalar(0, 0, 255),
-			//	thickness,
-			//	lineType);
-			//cv::circle(frameRight, cv::Point2f(rightLoc.x(), rightLoc.y()), 5,
-			//	cv::Scalar(0, 0, 255),
-			//	thickness,
-			//	lineType);
-			//cv::circle(frameThree, cv::Point2f(threeLoc.x(), threeLoc.y()), 5,
-			//	cv::Scalar(0, 0, 255),
-			//	thickness,
-			//	lineType);
+			cout << " fastTracking " << endl;
+			if (once){
+				CoordinateReal leftCameraLoc(0, 0, 0);
+				CoordinateReal rightCameraLoc(0,0,0);
+				if (found) {
+					leftCameraLoc = kalman.expectedLocObs(one);
+					rightCameraLoc = kalman.expectedLocObs(two);
+				}
+				leftLoc = fastTrack.findObject(frameLeft, prevFrameLeft, leftCameraLoc,leftDebug);
+				rightLoc = fastTrack.findObject(frameRight, prevFrameRight, rightCameraLoc ,rightDebug);
+				// go through the list of locations 
+				if (multiCams){
+					CoordinateReal miscCameraLoc(0, 0, 0);
+					if (found){
+						miscCameraLoc = kalman.expectedLocObs(three);
+					}
+					threeLoc = fastTrack.findObject(frameThree, prevFrameThree, miscCameraLoc, threeDebug);
+				}
+			}
+			frameLeft.copyTo(prevFrameLeft);
+			frameRight.copyTo(prevFrameRight);
+			if (multiCams){
+				frameThree.copyTo(prevFrameThree);
+			}
+			once = true;
+			cv::circle(frameLeft, cv::Point2f(leftLoc.x(), leftLoc.y()), 5,
+				cv::Scalar(0, 0, 255),
+				thickness,
+				lineType);
+			cv::circle(frameRight, cv::Point2f(rightLoc.x(), rightLoc.y()), 5,
+				cv::Scalar(0, 0, 255),
+				thickness,
+				lineType);
+			cv::circle(frameThree, cv::Point2f(threeLoc.x(), threeLoc.y()), 5,
+				cv::Scalar(0, 0, 255),
+				thickness,
+				lineType);
 		}
 		if (multiCams){
 			foundInMono = Util::isInFrame(threeLoc);
@@ -336,8 +339,13 @@ void main(int argc, char *argv[])
 		 end = clock();
 		elapsedTime = double(end - beginTime) / CLOCKS_PER_SEC;
 		cout << "fps"  << 1 / elapsedTime << endl;
+		//convert fps to string
+		string fps = std::to_string(1 / elapsedTime);
+		fps += "\n";
+		framesFile_ << fps;
 
 	}
+	framesFile_.close();
 	kalman.closeFile();
 	return;
 }

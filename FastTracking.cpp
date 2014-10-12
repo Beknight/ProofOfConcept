@@ -2,7 +2,7 @@
 #include "Util.h"
 #include "Camera.h"
 #define MAX_VALUE 255
-#define BLUR_VAL 25
+#define BLUR_VAL 30
 namespace Thesis{
 	FastTracking::FastTracking(int sensitivity)
 	{
@@ -16,6 +16,7 @@ namespace Thesis{
 		Mat difference;
 		Mat threshImage;
 		// gray scale both of them 
+		
 		cvtColor(first, greyOne, COLOR_BGR2GRAY);
 		cvtColor(second, greyTwo, COLOR_BGR2GRAY);
 		// get the asbolue difference of the images
@@ -38,7 +39,7 @@ namespace Thesis{
 		if (debug){
 			imshow("threshold", threshImage);
 		}
-		return coord;
+			return coord;
 	}
 
 	Point FastTracking::searchForMovement(Mat threshImage, Mat second, CoordinateReal currentBelief){
