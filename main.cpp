@@ -94,7 +94,7 @@ void main(int argc, char *argv[])
 	// checkt the cam count 
 	if (multiCams){
 		//load in all the cameras
-		three = Camera(3, 0, 0, 0, 0, 90);//Camera(3, 200, -60, 480, 7,111);
+		three = Camera(3, 175, -50, 585, 7.1, 97);//Camera(3, 200, -60, 480, 7,111);
 	}
 	//==========hsv values=======================
 	cv::Mat hsvFrame;
@@ -237,8 +237,11 @@ void main(int argc, char *argv[])
 				line(frameThree, rightRect[2], rightRect[3], cv::Scalar(0, 255, 0), 2);
 				line(frameThree, rightRect[3], rightRect[0], cv::Scalar(0, 255, 0), 2);
 				cout << " foundIN x: " << coordThree.x() << "found in y: " << coordThree.y() << endl;
+				foundInMono = true;
+				threeLoc = coordThree;
 			}
 			found = true;
+			
 		}
 		else if(!record){
 			cout << " fastTracking " << endl;
@@ -305,6 +308,7 @@ void main(int argc, char *argv[])
 		}
 		if (foundInMono){
 			// pass the observation 
+			cout << "found in mono" << endl;
 			kalman.observation(threeLoc, three);
 			foundInMono = false;
 		}
@@ -327,6 +331,7 @@ void main(int argc, char *argv[])
 		}
 		command = waitKey(1);
 		if (surfing){
+			cout << "wait" << endl;
 			waitKey(0);
 			surfing = false;
 		}
@@ -372,7 +377,7 @@ void commands(char c){
 		break;
 	case 'h':
 		hsv = true;
-		//simulation = true;
+		simulation = true;
 		break;
 	case 'o':
 		record = true;

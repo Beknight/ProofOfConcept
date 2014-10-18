@@ -34,6 +34,7 @@ namespace Thesis{
 	private:
 		ofstream dataFile_;
 		ofstream obsFile_;
+		ofstream covarFile_;
 		// the angle constants that we need for 
 		double angleConstX = 0;
 		double angleConstY = 0;

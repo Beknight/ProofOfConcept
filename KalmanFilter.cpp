@@ -93,6 +93,8 @@ namespace Thesis{
 		Mat innovation;
 		// get the expect obs <-- this call automatically sets the H_Jacobian 
 		Mat expectedObs = expectedMonoObservation(camera);
+		cout << "expected Obs" << endl;
+		Util::printMatrix(expectedObs);
 		Mat obs = buildObsMat(2, pixelCo);
 		//get the innovation
 		innovation = obs - expectedObs;
@@ -301,16 +303,24 @@ namespace Thesis{
 		string time = to_string(timeLastUpdate);
 		string colon = " : ";
 		outPutString = x + colon + y + colon + z + colon + xVel + colon + yVel + colon + zVel + colon + time + "\n";
+		// convert the covaraince for the x y z
+		string covarX = to_string(covariance_.at<double>(X_POS,0));
+		string covarY = to_string(covariance_.at<double>(Y_POS,1));
+		string covarZ = to_string(covariance_.at<double>(Z_POS,2));
 		dataFile_ << outPutString;
+		outPutString = covarX + colon + covarY + colon + covarZ;
+		covarFile_ << outPutString;
 	}
 
 	void KalmanFilter::openFile(){
 		dataFile_.open("../../../../ThesisImages/data.txt");
 		obsFile_.open("../../../../ThesisImages/obsData.txt");
+		covarFile_.open("../../../../ThesisImages/covarData.txt");
 	}
 
 	void KalmanFilter::closeFile(){
 		dataFile_.close();
 		obsFile_.close();
+		covarFile_.close();
 	}
 }
